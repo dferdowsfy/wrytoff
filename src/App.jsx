@@ -572,6 +572,58 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
     link.click();
   };
 
+  const [isParsingW2, setIsParsingW2] = useState(false);
+  const w2FileRef = useRef();
+
+  const handleW2Upload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsParsingW2(true);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        const base64Content = evt.target.result.split(',')[1];
+        const mediaType = file.type;
+
+        // Call our Vercel Serverless Function
+        const res = await fetch('/api/parse-w2', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{
+              role: 'user',
+              content: [
+                { type: "text", text: "Extract W-2 data from this image/document. Return ONLY a valid JSON object with keys: wages (Box 1), withholding (Box 2). Format: { \"wages\": 1234.56, \"withholding\": 123.45 }" },
+                { type: "image", source: { type: "base64", media_type: mediaType, data: base64Content } }
+              ]
+            }]
+          })
+        });
+
+        const data = await res.json();
+        if (data.content) {
+          try {
+            const cleanJson = data.content.match(/\{.*\}/s)?.[0];
+            const parsed = JSON.parse(cleanJson);
+            if (parsed.wages) setW2Income(parsed.wages);
+            if (parsed.withholding) setW2Withheld(parsed.withholding);
+            alert("W-2 Successfully Parsed!");
+          } catch (pe) {
+            console.error("JSON Parse error:", pe, data.content);
+            alert("Could not interpret AI response. Please enter manually.");
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Error uploading file.");
+    } finally {
+      setIsParsingW2(false);
+    }
+  };
+
   const fileInputRef = useRef();
   const handleImportCSV = (e) => {
     const file = e.target.files[0];
@@ -723,23 +775,81 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
 
         {/* Other tabs omitted for brevity but they follow the same patterns */}
         {activeTab === "income" && (
-          <div style={{ maxWidth: "600px" }}>
-            <div style={{ marginBottom: "24px" }}>
-              <div style={{ fontSize: "12px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>FILING STATUS</div>
-              <select value={scenario.filingStatus} onChange={e => setScenario({ ...scenario, filingStatus: e.target.value })} style={bigInp()}>
-                <option value="Single">Single</option>
-                <option value="MFJ">Married Filing Jointly (MFJ)</option>
-              </select>
+          <div style={{ animation: "fadeIn 0.4s ease-out" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px" }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Filing Context</div>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  {["Single", "MFJ"].map(fs => (
+                    <button key={fs} onClick={() => setScenario({ ...scenario, filingStatus: fs })} style={{ 
+                      flex: 1, padding: "12px", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600",
+                      background: scenario.filingStatus === fs ? t.blue : t.surface,
+                      border: `1px solid ${scenario.filingStatus === fs ? t.blue : t.border}`,
+                      color: scenario.filingStatus === fs ? "#fff" : t.text,
+                      transition: "all 0.2s"
+                    }}>
+                      {fs === "MFJ" ? "Married Filing Jointly" : "Single / Individual"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ width: "24px" }} />
+              <div style={{ flex: 1, textAlign: "right" }}>
+                <input type="file" ref={w2FileRef} style={{ display: "none" }} accept="image/*,.pdf" onChange={handleW2Upload} />
+                <button 
+                  onClick={() => w2FileRef.current.click()} 
+                  disabled={isParsingW2}
+                  style={{ 
+                    background: t.blue, color: "#fff", border: "none", borderRadius: "10px", padding: "14px 24px", fontSize: "14px", fontWeight: "700", cursor: "pointer", 
+                    boxShadow: `0 4px 12px ${t.blue}44`, display: "flex", alignItems: "center", gap: "10px", width: "100%", justifyContent: "center"
+                  }}
+                >
+                  {isParsingW2 ? "Parsing W-2..." : "📄 Extract W-2 with AI"}
+                </button>
+              </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-              <div>
-                <div style={{ fontSize: "12px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>BIZ REVENUE (ACCRUAL)</div>
-                <input type="number" value={bizIncome || ""} onChange={e => setBizIncome(parseFloat(e.target.value) || 0)} style={bigInp()} />
+
+            <div style={{ display: "grid", gridTemplateColumns: scenario.filingStatus === "MFJ" ? "1fr 1fr" : "1fr", gap: "32px" }}>
+              {/* PRIMARY TAXPAYER */}
+              <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "16px", padding: "24px" }}>
+                <div style={{ fontSize: "14px", fontWeight: "700", color: t.blue, marginBottom: "20px" }}>PRIMARY HOLDER</div>
+                
+                <div style={{ marginBottom: "20px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>W-2 WAGES (GROSS)</div>
+                  <input type="number" value={w2Income || ""} onChange={e => setW2Income(parseFloat(e.target.value) || 0)} placeholder="Enter Box 1 amount" style={{ ...bigInp(), textAlign: "left" }} />
+                </div>
+                
+                <div style={{ marginBottom: "20px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>FEDERAL WITHHOLDING</div>
+                  <input type="number" value={w2Withheld || ""} onChange={e => setW2Withheld(parseFloat(e.target.value) || 0)} placeholder="Enter Box 2 amount" style={{ ...bigInp(), textAlign: "left", color: t.green }} />
+                </div>
+
+                <div style={{ borderTop: `1px dashed ${t.border}`, pt: "20px", marginTop: "20px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px", marginTop: "20px" }}>BIZ REVENUE (ACCRUAL)</div>
+                  <input type="number" value={bizIncome || ""} onChange={e => setBizIncome(parseFloat(e.target.value) || 0)} style={{ ...bigInp(), textAlign: "left" }} />
+                </div>
               </div>
-              <div>
-                <div style={{ fontSize: "12px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>W-2 INCOME (GROSS)</div>
-                <input type="number" value={w2Income || ""} onChange={e => setW2Income(parseFloat(e.target.value) || 0)} style={bigInp()} />
-              </div>
+
+              {/* SPOUSE SECTION */}
+              {scenario.filingStatus === "MFJ" && (
+                <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "16px", padding: "24px" }}>
+                  <div style={{ fontSize: "14px", fontWeight: "700", color: t.amber, marginBottom: "20px" }}>SPOUSE / JOINT</div>
+                  
+                  <div style={{ marginBottom: "20px" }}>
+                    <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>W-2 WAGES (GROSS)</div>
+                    <input type="number" value={spouseIncome || ""} onChange={e => setSpouseIncome(parseFloat(e.target.value) || 0)} placeholder="Enter Box 1 amount" style={{ ...bigInp(), textAlign: "left" }} />
+                  </div>
+                  
+                  <div style={{ marginBottom: "20px" }}>
+                    <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>FEDERAL WITHHOLDING</div>
+                    <input type="number" value={spouseWithheld || ""} onChange={e => setSpouseWithheld(parseFloat(e.target.value) || 0)} placeholder="Enter Box 2 amount" style={{ ...bigInp(), textAlign: "left", color: t.green }} />
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div style={{ marginTop: "24px", padding: "16px", background: `${t.blue}08`, borderRadius: "12px", border: `1px solid ${t.blue}22`, fontSize: "12px", color: t.textDim, lineHeight: "1.5" }}>
+              <strong>Note on Business Income:</strong> Accrual revenue should include all income earned during the tax year, regardless of when cash was received. Your business deductions are managed in the <strong>Expenses</strong> tab.
             </div>
           </div>
         )}
