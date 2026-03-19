@@ -543,15 +543,20 @@ function W2Uploader({ onParsed, t }) {
       ];
 
       const key = import.meta.env.VITE_OPENROUTER_API_KEY;
+      const model = import.meta.env.VITE_OPENROUTER_MODEL || "anthropic/claude-3.5-sonnet";
       let result;
 
       if (key) {
-        // Direct OpenRouter call for Vercel/Static deployments
         const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${key.trim()}`,
+            "HTTP-Referer": window.location.origin,
+            "X-Title": "Wrytoff"
+          },
           body: JSON.stringify({
-            model: "anthropic/claude-3.5-sonnet",
+            model: model,
             messages: [{
               role: "user",
               content: content.map(c => {
@@ -564,6 +569,7 @@ function W2Uploader({ onParsed, t }) {
           }),
         });
         const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error?.message || "OpenRouter Error");
         const raw = data.choices?.[0]?.message?.content || "";
         result = JSON.parse(raw.replace(/```json|```/g, "").trim());
       } else {
@@ -1442,12 +1448,18 @@ RULES:
 
   const callAI = async (msgs) => {
     const key = import.meta.env.VITE_OPENROUTER_API_KEY;
+    const model = import.meta.env.VITE_OPENROUTER_MODEL || "anthropic/claude-3.5-sonnet";
     if (key) {
       const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${key.trim()}`,
+          "HTTP-Referer": window.location.origin,
+          "X-Title": "Wrytoff"
+        },
         body: JSON.stringify({
-          model: "anthropic/claude-3.5-sonnet",
+          model: model,
           messages: [
             { role: "system", content: buildSystemPrompt() },
             ...msgs.map(m => ({ role: m.role, content: m.content }))
@@ -1455,6 +1467,10 @@ RULES:
         })
       });
       const data = await resp.json();
+      if (!resp.ok) {
+        console.error("OpenRouter direct error:", data);
+        return `Sorry, I got an error from the AI: ${data.error?.message || "Unauthorized"}`;
+      }
       return data.choices?.[0]?.message?.content || "Sorry, I couldn't get a response.";
     }
 
