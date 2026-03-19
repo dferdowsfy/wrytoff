@@ -603,7 +603,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
           <div>
             <div style={{ fontSize: "10px", letterSpacing: "2px", color: t.textDim, fontWeight: "700" }}>{companyName} · TAX 2026</div>
-            <div style={{ fontSize: "24px", fontWeight: "700", letterSpacing: "-0.5px" }}>Wrytoff Optimizer</div>
+            <div style={{ fontSize: "24px", fontWeight: "700", letterSpacing: "-0.5px" }}>WRYTOFF TAX ENGINE</div>
           </div>
           <div style={{ textAlign: "right", display: "flex", gap: "24px", alignItems: "center" }}>
             <button onClick={() => setIsDark(!isDark)} style={{ background: t.surface, border: `1px solid ${t.border2}`, borderRadius: "20px", padding: "6px 12px", fontSize: "12px", cursor: "pointer", color: t.text }}>{isDark ? "☀️ Light" : "🌙 Dark"}</button>
@@ -615,7 +615,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
           </div>
         </div>
         <div style={{ display: "flex", gap: "20px" }}>
-          {["summary", "expenses", "income", "optimizations", "playbook"].map(tab => (
+          {["summary", "expenses", "income", "optimizations"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{ background: "none", border: "none", borderBottom: activeTab === tab ? `2px solid ${t.blue}` : "2px solid transparent", color: activeTab === tab ? t.blue : t.textDim, padding: "12px 4px", fontSize: "13px", fontWeight: "600", cursor: "pointer", textTransform: "capitalize" }}>{tab}</button>
           ))}
         </div>
@@ -660,6 +660,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               <div style={{ display: "flex", gap: "10px" }}>
                 <input type="file" accept=".csv" ref={fileInputRef} style={{ display: "none" }} onChange={handleImportCSV} />
                 <button onClick={() => setShowAddModal(true)} style={{ background: t.green, color: "#fff", border: "none", borderRadius: "8px", padding: "8px 16px", fontWeight: "600", cursor: "pointer" }}>+ Add Expense</button>
+                <button onClick={() => { if(confirm("Clear all expenses?")) setExpenses([]); }} style={{ background: "none", border: `1px solid ${t.red}44`, color: t.red, borderRadius: "8px", padding: "8px 12px", fontSize: "11px", cursor: "pointer" }}>Clear All</button>
                 <button onClick={() => fileInputRef.current?.click()} style={{ background: t.surface, border: `1px solid ${t.border2}`, borderRadius: "8px", padding: "8px 16px", fontSize: "12px", cursor: "pointer" }}>Import CSV</button>
                 <button onClick={handleExportCSV} style={{ background: t.surface, border: `1px solid ${t.border2}`, borderRadius: "8px", padding: "8px 16px", fontSize: "12px", cursor: "pointer" }}>Export CSV</button>
               </div>
@@ -701,7 +702,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                       </td>
                       <td style={{ padding: "12px 16px", fontWeight: "600", color: t.green }}>{fmt(calcDeductible(e))}</td>
                       <td style={{ padding: "12px 16px", textAlign: "right" }}>
-                        <button onClick={() => removeExpense(e.id)} style={{ background: "none", border: "none", color: t.red, cursor: "pointer" }}>✕</button>
+                        <button onClick={() => removeExpense(e.id)} style={{ background: "none", border: `1px solid ${t.red}22`, borderRadius: "6px", color: t.red, padding: "4px 8px", fontSize: "10px", fontWeight: "700", cursor: "pointer", transition: "all 0.15s" }}>DELETE</button>
                       </td>
                     </tr>
                   ))}
@@ -734,7 +735,6 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
           </div>
         )}
 
-        {activeTab === "playbook" && <DeductionPlaybook t={t} />}
         {activeTab === "optimizations" && (
            <TaxOpportunitiesEngine 
              t={t} 
@@ -765,19 +765,33 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
 // TAX OPPORTUNITIES ENGINE COMPONENTS
 // ─────────────────────────────────────────────
 function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, setActiveScenarioId, tempScenarioValue, setTempScenarioValue, fmt }) {
+  const [isScanning, setIsScanning] = useState(false);
+  const [hasScanned, setHasScanned] = useState(false);
+
   const ranking = useMemo(() => {
     return OPPORTUNITIES.map(opp => {
       const applies = opp.check(ctx);
       const savings = opp.estimate ? opp.estimate(ctx) : 0;
-      return { ...opp, applies, estSavings: savings };
+      // AI ranking logic simulation
+      let aiScore = (savings / 1000) * (opp.priority || 1);
+      if (opp.confidence === "High") aiScore *= 1.2;
+      return { ...opp, applies, estSavings: savings, aiScore };
     }).filter(opp => !ctx.dismissedOpps.includes(opp.id));
   }, [ctx]);
 
-  const topOpps = ranking.filter(o => o.applies && !o.advanced).sort((a, b) => b.estSavings - a.estSavings);
+  const topOpps = ranking.filter(o => o.applies && !o.advanced).sort((a, b) => b.aiScore - a.aiScore);
   const secondaryOppsArr = ranking.filter(o => !o.applies && !o.advanced);
   const advancedOppsArr = ranking.filter(o => o.advanced);
   
   const totalPotential = topOpps.reduce((s, o) => s + o.estSavings, 0);
+
+  const triggerScan = () => {
+    setIsScanning(true);
+    setTimeout(() => {
+      setIsScanning(false);
+      setHasScanned(true);
+    }, 2400);
+  };
 
   return (
     <div style={{ animation: "fadeIn 0.4s ease-out" }}>
@@ -786,7 +800,6 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
         .opp-card:hover { border-color: ${t.blue}66 !important; background: ${t.surface} !important; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.1); }
       `}</style>
 
-      {/* 1. TOP SUMMARY STRIP */}
       <div style={{ 
         background: `linear-gradient(135deg, ${t.blue}aa 0%, ${t.surface2} 100%)`, 
         border: `1px solid ${t.border}`, 
@@ -798,14 +811,27 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
         gap: "24px",
         alignItems: "center",
         backdropFilter: "blur(12px)",
-        boxShadow: `0 8px 32px -4px ${t.blue}22`
+        boxShadow: `0 8px 32px -4px ${t.blue}22`,
+        position: "relative",
+        overflow: "hidden"
       }}>
+        {isScanning && (
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "700", gap: "12px", backdropFilter: "blur(4px)" }}>
+            <div style={{ width: "16px", height: "16px", border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+            AI IS SCANNING CONTEXT...
+          </div>
+        )}
+        <style>{` @keyframes spin { to { transform: rotate(360deg); } } `}</style>
+
         <div>
           <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Potential Additional Savings</div>
           <div style={{ fontSize: "36px", fontWeight: "800", color: t.text }}>{fmt(totalPotential)}</div>
         </div>
         <div style={{ borderLeft: `1px solid ${t.border}`, borderRight: `1px solid ${t.border}`, padding: "0 24px" }}>
-          <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Best Next Move</div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Best Next Move</div>
+            {!hasScanned && <button onClick={triggerScan} style={{ background: t.blue, color: "#fff", border: "none", borderRadius: "4px", padding: "2px 8px", fontSize: "10px", fontWeight: "700", cursor: "pointer" }}>⚡ AI SCAN</button>}
+          </div>
           {topOpps.length > 0 ? (
             <div style={{ fontSize: "18px", fontWeight: "600", color: "#fff" }}>{topOpps[0].title}</div>
           ) : (
@@ -1044,19 +1070,6 @@ function TaxBot({ t, calc, expenses, dispatch, setActiveTab }) {
         </div>
       )}
     </>
-  );
-}
-
-function DeductionPlaybook({ t }) {
-  return (
-    <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", padding: "24px" }}>
-      <h3 style={{ marginTop: 0 }}>Deduction Playbook</h3>
-      <div style={{ fontSize: "14px", color: t.textDim, lineHeight: "1.6" }}>
-        <p><strong>Housing & Real Estate:</strong> Deduct your home office square footage percentage against rent/mortgage interest.</p>
-        <p><strong>Meals:</strong> 50% deductible if for business clients or while traveling.</p>
-        <p><strong>Equipment:</strong> Use Section 179 to expense hardware up to $1M in one year.</p>
-      </div>
-    </div>
   );
 }
 
