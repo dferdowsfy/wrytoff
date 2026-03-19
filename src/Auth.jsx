@@ -20,7 +20,7 @@ export default function AuthGuard() {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
-  const [showAuthForm, setShowAuthForm] = useState(false); // Controls whether to show Landing or Auth Form
+  const [showAuthForm, setShowAuthForm] = useState(false);
 
   // Onboarding
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
@@ -90,10 +90,9 @@ export default function AuthGuard() {
   };
 
   if (loading) {
-    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: '#fff', fontFamily: "'DM Mono', monospace" }}>Loading Wrytoff...</div>;
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: '#fff', fontFamily: "'Inter', sans-serif" }}>Loading Wrytoff...</div>;
   }
 
-  // LOGOUT (Exported securely or passed down)
   const handleLogout = () => signOut(auth);
 
   // 1) NOT LOGGED IN — SHOW LANDING OR FORM
@@ -102,74 +101,71 @@ export default function AuthGuard() {
       return (
         <div style={{ minHeight: '100vh', background: 'linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)', color: '#1e293b', fontFamily: "'Inter', sans-serif", overflowX: 'hidden' }}>
           {/* TOP NAV */}
-          <nav style={{ padding: '24px 80px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '32px', height: '32px', background: '#0f172a', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>W</div>
-              <span style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px' }}>Wrytoff</span>
-              <div style={{ marginLeft: '40px', display: 'flex', gap: '30px', fontSize: '14px', fontWeight: '500', color: '#64748b' }}>
-                <span style={{ cursor: 'pointer' }}>Features</span>
-                <span style={{ cursor: 'pointer' }}>Pricing</span>
-                <span style={{ cursor: 'pointer' }}>Blog</span>
-              </div>
+          <nav style={{ padding: '32px 80px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L3.5 7V17L12 22L20.5 17V7L12 2Z" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3.5 7L12 12L20.5 7" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 22V12" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.8px' }}>Wrytoff</span>
             </div>
-            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-              <button onClick={() => { setIsLogin(true); setShowAuthForm(true); }} style={{ background: 'none', border: '1px solid #cbd5e1', padding: '10px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', color: '#0f172a' }}>Login</button>
-              <button onClick={() => { setIsLogin(false); setShowAuthForm(true); }} style={{ background: '#0f172a', color: '#fff', padding: '10px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>Sign Up</button>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <button onClick={() => { setIsLogin(true); setShowAuthForm(true); }} style={{ background: 'none', border: '1px solid #cbd5e1', padding: '10px 28px', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', color: '#0f172a' }}>Login</button>
+              <button onClick={() => { setIsLogin(false); setShowAuthForm(true); }} style={{ background: '#0f172a', color: '#fff', padding: '10px 28px', borderRadius: '10px', fontSize: '14px', fontWeight: '600', border: 'none', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>Sign Up</button>
             </div>
           </nav>
 
           {/* HERO SECTION */}
-          <div style={{ padding: '80px 80px 120px', display: 'flex', alignItems: 'center', gap: '60px', maxWidth: '1400px', margin: '0 auto' }}>
+          <div style={{ padding: '60px 80px 100px', display: 'flex', alignItems: 'center', gap: '80px', maxWidth: '1400px', margin: '0 auto' }}>
             <div style={{ flex: 1 }}>
-              <h1 style={{ fontSize: '72px', fontWeight: '900', lineHeight: '1.05', color: '#0f172a', marginBottom: '24px', letterSpacing: '-2px' }}>
-                Optimize your <br/>tax refund with AI
+              <h1 style={{ fontSize: '80px', fontWeight: '900', lineHeight: '0.95', color: '#0f172a', marginBottom: '32px', letterSpacing: '-3px' }}>
+                Optimize your <br/><span style={{ color: '#2563eb' }}>tax refund</span> <br/>with AI
               </h1>
-              <p style={{ fontSize: '19px', color: '#475569', marginBottom: '40px', lineHeight: '1.6', maxWidth: '540px' }}>
-                Leverage advanced artificial intelligence to identify every available deduction, maximize your write-offs, and ensure maximum compliance with ease.
+              <p style={{ fontSize: '20px', color: '#475569', marginBottom: '44px', lineHeight: '1.5', maxWidth: '520px' }}>
+                Maximize your write-offs, discover hidden deductions, and maximize your savings effortlessly with Wrytoff's intelligent platform.
               </p>
-              <button onClick={() => { setIsLogin(false); setShowAuthForm(true); }} style={{ background: '#2563eb', color: '#fff', padding: '16px 36px', borderRadius: '12px', fontSize: '16px', fontWeight: '700', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(37, 99, 235, 0.3)' }}>
-                Get Started for Free ↗
+              <button onClick={() => { setIsLogin(false); setShowAuthForm(true); }} style={{ background: '#2563eb', color: '#fff', padding: '18px 40px', borderRadius: '14px', fontSize: '17px', fontWeight: '700', border: 'none', cursor: 'pointer', boxShadow: '0 12px 24px -6px rgba(37, 99, 235, 0.4)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                Get Started for Free <span style={{ fontSize: '20px' }}>↗</span>
               </button>
             </div>
 
             <div style={{ flex: 1.2, position: 'relative' }}>
-              {/* DASHBOARD MOCKUP */}
-              <div style={{ background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
-                {/* Mock Header */}
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '8px' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f57' }} />
-                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ffbd2e' }} />
-                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#28c840' }} />
+              <div style={{ background: '#fff', borderRadius: '24px', border: '1px solid #e2e8f0', boxShadow: '0 40px 80px -20px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
+                <div style={{ padding: '18px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '8px' }}>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f57' }} />
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e' }} />
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#28c840' }} />
                 </div>
-                <div style={{ padding: '40px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '20px' }}>TAX DASHBOARD</div>
-                  <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
-                    <div style={{ flex: 1, padding: '20px', borderRadius: '12px', background: '#f8fafc', border: '1px solid #f1f5f9' }}>
-                      <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '8px' }}>Estimated refund</div>
-                      <div style={{ fontSize: '32px', fontWeight: '800', color: '#0f172a' }}>$14,750</div>
+                <div style={{ padding: '48px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: '700', color: '#94a3b8', marginBottom: '24px', letterSpacing: '1px' }}>TAX DASHBOARD</div>
+                  <div style={{ display: 'flex', gap: '24px', marginBottom: '40px' }}>
+                    <div style={{ flex: 1, padding: '24px', borderRadius: '16px', background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '10px' }}>Estimated refund</div>
+                      <div style={{ fontSize: '42px', fontWeight: '900', color: '#0f172a', letterSpacing: '-1px' }}><span style={{ position: 'relative' }}>$14,750<div style={{ position: 'absolute', inset: '-8px', background: '#2563eb11', borderRadius: '8px', border: '2px solid #2563eb33' }}/></span></div>
                     </div>
-                    <div style={{ flex: 1, padding: '20px', borderRadius: '12px', background: '#f8fafc', border: '1px solid #f1f5f9' }}>
-                      <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '8px' }}>Deductions found</div>
-                      <div style={{ fontSize: '32px', fontWeight: '800', color: '#10b981' }}>$8,920</div>
+                    <div style={{ flex: 1, padding: '24px', borderRadius: '16px', background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '10px' }}>Deductions found</div>
+                      <div style={{ fontSize: '42px', fontWeight: '900', color: '#10b981', letterSpacing: '-1px' }}>$8,920</div>
                     </div>
                   </div>
-                  {/* BAR CHART MOCK */}
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', height: '120px' }}>
-                    {[40, 70, 45, 90, 65, 80, 55].map((h, i) => (
-                      <div key={i} style={{ flex: 1, height: `${h}%`, background: h > 75 ? '#2563eb' : '#e2e8f0', borderRadius: '4px' }} />
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '14px', height: '140px', padding: '0 20px' }}>
+                    {[35, 60, 40, 95, 55, 75, 50, 85].map((h, i) => (
+                      <div key={i} style={{ flex: 1, height: `${h}%`, background: h > 80 ? '#2563eb' : '#e2e8f0', borderRadius: '6px' }} />
                     ))}
                   </div>
                 </div>
               </div>
 
-              {/* CHAT BUBBLE OVERLAY */}
-              <div style={{ position: 'absolute', bottom: '40px', right: '-20px', width: '280px', background: '#fff', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)', padding: '20px', border: '1px solid #e2e8f0', zIndex: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#fff' }}>✨</div>
-                  <span style={{ fontSize: '13px', fontWeight: '700' }}>Wrytoff AI</span>
+              <div style={{ position: 'absolute', bottom: '60px', right: '-40px', width: '320px', background: '#fff', borderRadius: '20px', boxShadow: '0 30px 40px -10px rgba(0,0,0,0.15)', padding: '24px', border: '1px solid #e2e8f0', zIndex: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  </div>
+                  <span style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a' }}>Wrytoff AI</span>
                 </div>
-                <div style={{ fontSize: '13px', color: '#334155', lineHeight: '1.4', background: '#f1f5f9', padding: '12px', borderRadius: '12px', borderBottomLeftRadius: '2px' }}>
-                  Added home office deduction: <span style={{ fontWeight: 'bold' }}>+$300/mo</span>
+                <div style={{ fontSize: '14px', color: '#334155', lineHeight: '1.5', background: '#f1f5f9', padding: '16px', borderRadius: '16px', borderBottomLeftRadius: '4px' }}>
+                  Added home office deduction: <span style={{ color: '#2563eb', fontWeight: '800' }}>+$300/mo</span>
                 </div>
               </div>
             </div>
@@ -179,11 +175,20 @@ export default function AuthGuard() {
     }
 
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', background: '#0f172a', color: '#f8fafc', fontFamily: "'DM Sans', sans-serif" }}>
-        <div style={{ margin: 'auto', width: '100%', maxWidth: '400px', padding: '40px', background: '#1e293b', borderRadius: '16px', border: '1px solid #334155' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#10b981', margin: 0 }}>Wrytoff</h2>
-            <span onClick={() => setShowAuthForm(false)} style={{ fontSize: '12px', color: '#94a3b8', cursor: 'pointer' }}>Close</span>
+      <div style={{ minHeight: '100vh', display: 'flex', background: '#0f172a', color: '#f8fafc', fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ margin: 'auto', width: '100%', maxWidth: '440px', padding: '48px', background: '#1e293b', borderRadius: '24px', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+          <div style={{ marginBottom: '32px' }}>
+            <span onClick={() => setShowAuthForm(false)} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#94a3b8', cursor: 'pointer', marginBottom: '16px', fontWeight: '500' }}>
+              ← Back to home
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L3.5 7V17L12 22L20.5 17V7L12 2Z" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3.5 7L12 12L20.5 7" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', margin: 0, letterSpacing: '-0.5px' }}>Wrytoff</h2>
+            </div>
+            <p style={{ color: '#94a3b8', fontSize: '15px' }}>{isLogin ? 'Welcome back! Sign in to your account.' : 'Create your account to start optimizing.'}</p>
           </div>
           
           <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -211,8 +216,8 @@ export default function AuthGuard() {
   // 2) ONBOARDING / MISSING PROFILE
   if (needsOnboarding) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', background: '#0f172a', color: '#f8fafc', fontFamily: "'DM Sans', sans-serif" }}>
-        <div style={{ margin: 'auto', width: '100%', maxWidth: '400px', padding: '40px', background: '#1e293b', borderRadius: '16px', border: '1px solid #334155' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', background: '#0f172a', color: '#f8fafc', fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ margin: 'auto', width: '100%', maxWidth: '440px', padding: '48px', background: '#1e293b', borderRadius: '24px', border: '1px solid #334155' }}>
           <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '24px', color: '#fff' }}>Welcome to Wrytoff</h2>
           <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
@@ -244,7 +249,6 @@ export default function AuthGuard() {
   // 3) AUTHENTICATED & ONBOARDED
   return (
     <>
-      {/* We uniquely pass the handleLogout directly so the user can log out from the dashboard */}
       <WrytoffTaxOptimizer userProfile={userProfile} onLogout={handleLogout} />
     </>
   );
