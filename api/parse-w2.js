@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   }
 
   const key = process.env.OPENROUTER_API_KEY;
-  const defaultModel = process.env.OPENROUTER_MODEL || 'google/gemini-flash-1.5';
+  const defaultModel = process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free';
 
   if (!key) {
     return res.status(500).json({

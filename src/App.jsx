@@ -1422,10 +1422,11 @@ Why: [1 simple sentence]
 
 RULES:
 - DO NOT use markdown bolding (**) or headers.
-- Speak like a friendly human, not a tax expert. No jargon.
-- Always include the actions block when you have data to apply. 
-- DO NOT use labels like "Actions:" or "Update:" before the actions block.
-- Keep total response length under 50 words unless answering a complex question.`;
+- Speak like a friendly human, not a tax expert. NO jargon.
+- NEVER dump your internal math, reasoning, or "thought process" in the natural language text. 
+- DO NOT explain calculations in your reply (e.g. "office % = 300/4500"). Just give the friendly result.
+- ALWAYS include the actions block when you have data — DO NOT mention it or use labels like "Actions:".
+- Keep responses extremely short (under 50 words).`;
   };
 
   // Parse actions from AI reply and execute them
