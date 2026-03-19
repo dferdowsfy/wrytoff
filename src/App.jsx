@@ -153,10 +153,24 @@ function getDefaultBizPct(category) {
   return pcts[category] ?? 1.00;
 }
 
+const FREQUENCY_MULTIPLIERS = {
+  "monthly": 12,
+  "annual": 1,
+  "weekly": 52,
+  "quarterly": 4,
+  "one-time": 1
+};
+
+function calcAnnualized(amount, frequency) {
+  const mult = FREQUENCY_MULTIPLIERS[frequency] || 1;
+  return amount * mult;
+}
+
 function calcDeductible(e) {
+  const base = e.annualizedAmount ?? e.amount;
   // Meals always 50% IRS rule
-  if (e.category === "Meals & Entertainment") return e.amount * 0.50;
-  return e.amount * e.bizPct;
+  if (e.category === "Meals & Entertainment") return base * 0.50;
+  return base * e.bizPct;
 }
 
 const fmt = (n) => "$" + Math.round(Math.abs(n)).toLocaleString();
@@ -254,6 +268,7 @@ function AddExpenseModal({ onAdd, onClose, t }) {
   const [vendor, setVendor] = useState("");
   const [amount, setAmount] = useState("");
   const [bizPct, setBizPct] = useState(1.00);
+  const [frequency, setFrequency] = useState("annual");
 
   const group = IRS_LIBRARY[selectedGroup] || [];
 
@@ -265,21 +280,27 @@ function AddExpenseModal({ onAdd, onClose, t }) {
     if (!vendor) setVendor(rule.name);
   };
 
+  const inputVal = parseFloat(amount || 0);
+  const annualized = calcAnnualized(inputVal, frequency);
   const effectivePct = selectedRule?.deductPct === 0 ? 0 :
     (selectedGroup === "Meals & Entertainment" ? 0.50 : bizPct);
-  const deductible = parseFloat(amount || 0) * effectivePct;
+  const deductible = annualized * effectivePct;
 
-  const canAdd = vendor.trim() && parseFloat(amount) > 0 && selectedRule;
+  const canAdd = vendor.trim() && inputVal > 0 && selectedRule && frequency;
 
   const handleAdd = () => {
     if (!canAdd) return;
     onAdd({
-      id: nextId++,
+      id: Date.now() + Math.random(),
       vendor: vendor.trim(),
       category: selectedGroup,
-      amount: parseFloat(amount),
+      inputAmount: inputVal,
+      amount: inputVal, // backwards compat
+      frequency: frequency,
+      annualizedAmount: annualized,
       bizPct: selectedGroup === "Meals & Entertainment" ? 0.50 : bizPct,
       irsRule: selectedRule,
+      status: "Likely Deductible"
     });
     onClose();
   };
@@ -348,16 +369,29 @@ function AddExpenseModal({ onAdd, onClose, t }) {
           {selectedRule && (
             <div style={{ marginBottom: "4px" }}>
               <div style={{ fontSize: "11px", fontWeight: "600", color: t.textDim, marginBottom: "8px", letterSpacing: "0.5px" }}>3 — ENTER DETAILS</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "11px", color: t.textDim, marginBottom: "5px" }}>VENDOR / DESCRIPTION</div>
+                <input value={vendor} onChange={e => setVendor(e.target.value)} placeholder="e.g. Chase mortgage"
+                  style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: "7px", color: t.text, padding: "9px 12px", width: "100%", fontSize: "13px", boxSizing: "border-box", fontFamily: "inherit", outline: "none" }} />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
                 <div>
-                  <div style={{ fontSize: "11px", color: t.textDim, marginBottom: "5px" }}>VENDOR / DESCRIPTION</div>
-                  <input value={vendor} onChange={e => setVendor(e.target.value)} placeholder="e.g. Chase mortgage"
-                    style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: "7px", color: t.text, padding: "9px 12px", width: "100%", fontSize: "13px", boxSizing: "border-box", fontFamily: "inherit", outline: "none" }} />
-                </div>
-                <div>
-                  <div style={{ fontSize: "11px", color: t.textDim, marginBottom: "5px" }}>ANNUAL AMOUNT ($)</div>
+                  <div style={{ fontSize: "11px", color: t.textDim, marginBottom: "5px" }}>AMOUNT ($)</div>
                   <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0"
                     style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: "7px", color: t.inputText, padding: "9px 12px", width: "100%", fontSize: "13px", fontFamily: "'DM Mono',monospace", boxSizing: "border-box", outline: "none" }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: "11px", color: t.textDim, marginBottom: "5px" }}>FREQUENCY</div>
+                  <select value={frequency} onChange={e => setFrequency(e.target.value)}
+                    style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: "7px", color: t.text, padding: "9px 12px", width: "100%", fontSize: "13px", boxSizing: "border-box", fontFamily: "inherit", outline: "none" }}>
+                    <option value="monthly">Monthly</option>
+                    <option value="annual">Annual</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="one-time">One-time</option>
+                  </select>
                 </div>
               </div>
 
@@ -377,15 +411,15 @@ function AddExpenseModal({ onAdd, onClose, t }) {
               )}
 
               {/* Preview */}
-              {parseFloat(amount) > 0 && (
-                <div style={{ marginTop: "12px", background: t.effectiveBg, border: `1px solid ${t.effectiveBorder}`, borderRadius: "8px", padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              {inputVal > 0 && (
+                <div style={{ marginTop: "16px", background: t.effectiveBg, border: `1px solid ${t.effectiveBorder}`, borderRadius: "8px", padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <div style={{ fontSize: "11px", color: t.effectiveLabel }}>DEDUCTIBLE AMOUNT</div>
-                    <div style={{ fontSize: "20px", fontFamily: "'DM Mono',monospace", fontWeight: "600", color: t.effectiveNum }}>{fmt(deductible)}</div>
+                    <div style={{ fontSize: "10px", color: t.effectiveLabel, marginBottom: "4px" }}>ANNUALIZED TOTAL</div>
+                    <div style={{ fontSize: "18px", fontFamily: "'DM Mono',monospace", fontWeight: "600", color: t.text }}>{fmt(annualized)}</div>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: "11px", color: t.textDim }}>IRS basis</div>
-                    <div style={{ fontSize: "13px", fontWeight: "500", color: t.textMuted }}>{selectedRule.irsCode}</div>
+                    <div style={{ fontSize: "10px", color: t.textDim, marginBottom: "4px" }}>EST. SAVINGS</div>
+                    <div style={{ fontSize: "18px", fontFamily: "'DM Mono',monospace", fontWeight: "600", color: t.green }}>{fmt(deductible * 0.22)}</div>
                   </div>
                 </div>
               )}
@@ -663,7 +697,18 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
         case "SET_BIZ_INCOME": setBizIncome(action.value); fieldsChanged.bizIncome = true; break;
         case "SET_HOME_OFFICE": setHomeOfficeDed(action.value); fieldsChanged.homeOfficeDed = true; break;
         case "ADD_EXPENSE":
-          setExpenses(prev => [...prev, { id: Date.now() + Math.random(), status: action.expense.status || "Likely Deductible", ...action.expense }]);
+          const inputAmt = parseFloat(action.expense.amount || action.expense.inputAmount || 0);
+          const freq = action.expense.frequency || null;
+          const ann = calcAnnualized(inputAmt, freq || "annual");
+          setExpenses(prev => [...prev, { 
+            id: Date.now() + Math.random(), 
+            status: !freq ? "Needs Review" : (action.expense.status || "Likely Deductible"),
+            inputAmount: inputAmt,
+            amount: inputAmt,
+            frequency: freq,
+            annualizedAmount: ann,
+            ...action.expense 
+          }]);
           fieldsChanged.expenses = true;
           break;
         case "REMOVE_EXPENSE":
@@ -709,9 +754,15 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   }, []);
 
   const updateExp = useCallback((id, field, val) => {
-    setExpenses(prev => prev.map(e => e.id === id
-      ? { ...e, [field]: (field === "bizPct" || field === "amount") ? parseFloat(val) || 0 : val }
-      : e));
+    setExpenses(prev => prev.map(e => {
+      if (e.id !== id) return e;
+      const updated = { ...e, [field]: (field === "bizPct" || field === "amount" || field === "inputAmount") ? parseFloat(val) || 0 : val };
+      if (field === "inputAmount" || field === "frequency") {
+        updated.annualizedAmount = calcAnnualized(updated.inputAmount, updated.frequency || "annual");
+        if (updated.frequency) updated.status = "Likely Deductible";
+      }
+      return updated;
+    }));
   }, []);
 
   const computeCalc = (extraOpts = {}) => {
@@ -851,11 +902,13 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   };
 
   const exportCSV = () => {
-    const headers = ["Vendor", "Category", "Amount", "Biz %", "Deductible", "Estimated Savings", "Status"];
+    const headers = ["Vendor", "Category", "Input Amount", "Frequency", "Annualized", "Biz %", "Deductible", "Estimated Savings", "Status"];
     const rows = expenses.map(e => [
       `"${e.vendor.replace(/"/g, '""')}"`,
       `"${e.category}"`,
-      e.amount,
+      e.inputAmount || e.amount,
+      `"${e.frequency || 'MISSING'}"`,
+      e.annualizedAmount || e.amount,
       e.bizPct,
       calcDeductible(e),
       calcDeductible(e) * calc.marginal,
@@ -887,6 +940,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
       const categoryIdx = headers.findIndex(h => h.includes("category"));
       const amountIdx = headers.findIndex(h => h.includes("amount"));
       const bizIdx = headers.findIndex(h => h.includes("biz") || h.includes("%"));
+      const freqIdx = headers.findIndex(h => h.includes("freq"));
 
       if (vendorIdx === -1 || categoryIdx === -1 || amountIdx === -1) {
         return alert("CSV must contain 'Vendor', 'Category', and 'Amount' headers.");
@@ -907,9 +961,22 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
           if (!isNaN(pb)) bizPct = pb > 1 ? pb / 100 : pb;
         }
 
+        let frequency = null;
+        if (freqIdx !== -1 && row[freqIdx]) {
+          const f = row[freqIdx].toLowerCase();
+          if (["monthly", "annual", "weekly", "quarterly", "one-time"].includes(f)) frequency = f;
+        }
+
         actions.push({
           type: "ADD_EXPENSE",
-          expense: { vendor, category, amount, bizPct, status: "Likely Deductible" }
+          expense: { 
+            vendor, 
+            category, 
+            inputAmount: amount, 
+            amount: amount, 
+            frequency, 
+            status: frequency ? "Likely Deductible" : "Needs Review" 
+          }
         });
       }
 
@@ -1093,10 +1160,10 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
 
               <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", overflow: "hidden" }}>
                 <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", minWidth: "600px", borderCollapse: "collapse", fontSize: "13px" }}>
+                  <table style={{ width: "100%", minWidth: "800px", borderCollapse: "collapse", fontSize: "13px" }}>
                     <thead>
                       <tr style={{ background: t.surface2, borderBottom: `1px solid ${t.border}` }}>
-                        {["Vendor", "Category", "Amount", "Biz %", "Deductible", "Saves", "Confidence", ""].map(h => (
+                        {["Vendor", "Category", "Input Amount", "Frequency", "Annualized", "Biz %", "Deductible", "Saves", "Status", ""].map(h => (
                           <th key={h} style={{ padding: "10px 13px", textAlign: "left", fontSize: "10px", color: t.textFaint, fontWeight: "500", letterSpacing: "0.5px" }}>{h.toUpperCase()}</th>
                         ))}
                       </tr>
@@ -1107,48 +1174,77 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                         const c = t.catColors[e.category] || t.catColors["Office & Supplies"];
                         const rule = e.irsRule;
                         const expanded = expandedRow === e.id;
+                        const needsReview = e.status === "Needs Review" || !e.frequency;
+
                         return (
-                          <>
-                            <tr key={e.id} style={{ borderBottom: `1px solid ${t.border}`, background: i % 2 === 0 ? "transparent" : t.surface2 + "88" }}>
-                              <td style={{ padding: "8px 13px", color: t.text }}>{e.vendor}</td>
-                              <td style={{ padding: "8px 13px" }}>
-                                <span style={{ background: c.bg, color: c.text, border: `1px solid ${c.accent}33`, borderRadius: "4px", padding: "2px 7px", fontSize: "10px" }}>{e.category}</span>
-                              </td>
-                              <td style={{ padding: "8px 13px" }}>
-                                <input type="number" value={e.amount === 0 ? "" : e.amount} onChange={ev => updateExp(e.id, "amount", ev.target.value)} style={inp({ width: "74px" })} />
-                              </td>
-                              <td style={{ padding: "8px 13px" }}>
-                                {e.category === "Meals & Entertainment"
-                                  ? <span style={{ color: t.textFaint, fontFamily: "'DM Mono',monospace", fontSize: "12px" }}>50% IRS</span>
-                                  : <input type="number" min="0" max="1" step="0.05" value={e.bizPct === 0 ? "" : e.bizPct} onChange={ev => updateExp(e.id, "bizPct", ev.target.value)} style={inp({ width: "64px" })} />
-                                }
-                              </td>
-                              <td style={{ padding: "8px 13px", fontFamily: "'DM Mono',monospace", color: t.green, fontWeight: "500" }}>{fmt(ded)}</td>
-                              <td style={{ padding: "8px 13px", fontFamily: "'DM Mono',monospace", color: t.greenMid, fontSize: "12px" }}>~{fmt(ded * calc.marginal)}</td>
-                              <td style={{ padding: "8px 13px" }}>
-                                <span style={{
-                                  background: e.category === "Meals & Entertainment" ? (isDark ? "#422006" : "#fefce8") : e.status === "High Scrutiny" ? (isDark ? "#422006" : "#fefce8") : e.status === "Needs Facts" ? (isDark ? "#1e293b" : "#f1f5f9") : (isDark ? "#064e3b" : "#f0fdf4"),
-                                  color: e.category === "Meals & Entertainment" ? "#ca8a04" : e.status === "High Scrutiny" ? "#ca8a04" : e.status === "Needs Facts" ? "#64748b" : t.green,
-                                  fontSize: "10px", padding: "3px 6px", borderRadius: "12px", border: `1px solid ${e.category === "Meals & Entertainment" ? "#ca8a0455" : e.status === "High Scrutiny" ? "#ca8a0455" : e.status === "Needs Facts" ? "#64748b55" : t.green + "55"}`, whiteSpace: "nowrap"
-                                }}>
-                                  {e.category === "Meals & Entertainment" ? "50% Limit" : (e.status || "Likely Deductible")}
-                                </span>
-                              </td>
-                              <td style={{ padding: "8px 8px", whiteSpace: "nowrap" }}>
-                                {rule && (
-                                  <button onClick={() => setExpandedRow(expanded ? null : e.id)}
-                                    style={{ background: "none", border: `1px solid ${t.border}`, borderRadius: "5px", color: t.textDim, padding: "3px 8px", fontSize: "10px", cursor: "pointer", fontFamily: "inherit", marginRight: "4px" }}>
-                                    {expanded ? "▲" : "IRS"}
-                                  </button>
-                                )}
-                                {e.id >= 100 && (
-                                  <button onClick={() => removeExpense(e.id)}
-                                    style={{ background: "none", border: `1px solid ${t.red}44`, borderRadius: "5px", color: t.red, padding: "3px 8px", fontSize: "10px", cursor: "pointer", fontFamily: "inherit" }}>
-                                    ✕
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
+                          <React.Fragment key={e.id}>
+                            <tr style={{ 
+                              borderBottom: `1px solid ${t.border}`, 
+                              background: needsReview ? (isDark ? "#2a1212" : "#fff1f2") : (i % 2 === 0 ? "transparent" : t.surface2 + "88"),
+                              transition: "background 0.2s"
+                            }}>
+                            <td style={{ padding: "8px 13px", color: t.text, fontWeight: "500" }}>{e.vendor}</td>
+                            <td style={{ padding: "8px 13px" }}>
+                              <span style={{ background: c.bg, color: c.text, border: `1px solid ${c.accent}33`, borderRadius: "4px", padding: "2px 7px", fontSize: "10px" }}>{e.category}</span>
+                            </td>
+                            <td style={{ padding: "8px 13px" }}>
+                              <input type="number" 
+                                value={e.inputAmount || e.amount || ""} 
+                                onChange={ev => updateExp(e.id, "inputAmount", ev.target.value)} 
+                                style={inp({ width: "74px" })} 
+                              />
+                            </td>
+                            <td style={{ padding: "8px 13px" }}>
+                              <select 
+                                value={e.frequency || ""} 
+                                onChange={ev => updateExp(e.id, "frequency", ev.target.value)}
+                                style={inp({ 
+                                  width: "90px", 
+                                  color: !e.frequency ? t.red : t.inputText,
+                                  border: !e.frequency ? `1px solid ${t.red}` : `1px solid ${t.inputBorder}`
+                                })}
+                              >
+                                <option value="" disabled>Select...</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="annual">Annual</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="quarterly">Quarterly</option>
+                                <option value="one-time">One-time</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: "8px 13px", fontFamily: "'DM Mono',monospace", color: t.text, opacity: 0.8 }}>
+                              {fmt(e.annualizedAmount || e.amount)}
+                            </td>
+                            <td style={{ padding: "8px 13px" }}>
+                              {e.category === "Meals & Entertainment"
+                                ? <span style={{ color: t.textFaint, fontFamily: "'DM Mono',monospace", fontSize: "12px" }}>50% IRS</span>
+                                : <input type="number" min="0" max="1" step="0.05" value={e.bizPct || 0} onChange={ev => updateExp(e.id, "bizPct", ev.target.value)} style={inp({ width: "64px" })} />
+                              }
+                            </td>
+                            <td style={{ padding: "8px 13px", fontFamily: "'DM Mono',monospace", color: t.green, fontWeight: "500" }}>{fmt(ded)}</td>
+                            <td style={{ padding: "8px 13px", fontFamily: "'DM Mono',monospace", color: t.greenMid, fontSize: "12px" }}>~{fmt(ded * calc.marginal)}</td>
+                            <td style={{ padding: "8px 13px" }}>
+                              <span style={{
+                                background: e.category === "Meals & Entertainment" ? (isDark ? "#422006" : "#fefce8") : e.status === "High Scrutiny" ? (isDark ? "#422006" : "#fefce8") : needsReview ? (isDark ? "#7f1d1d" : "#fee2e2") : (isDark ? "#064e3b" : "#f0fdf4"),
+                                color: e.category === "Meals & Entertainment" ? "#ca8a04" : e.status === "High Scrutiny" || needsReview ? "#ef4444" : t.green,
+                                fontSize: "10px", padding: "3px 8px", borderRadius: "12px", border: `1px solid ${e.category === "Meals & Entertainment" ? "#ca8a0455" : needsReview ? "#ef4444" : t.green + "55"}`, whiteSpace: "nowrap", fontWeight: needsReview ? "700" : "400"
+                              }}>
+                                {needsReview ? "NEED FREQUENCY" : (e.category === "Meals & Entertainment" ? "50% Limit" : (e.status || "Likely Deductible"))}
+                              </span>
+                            </td>
+                            <td style={{ padding: "8px 8px", whiteSpace: "nowrap" }}>
+                              {rule && (
+                                <button onClick={() => setExpandedRow(expanded ? null : e.id)}
+                                  style={{ background: "none", border: `1px solid ${t.border}`, borderRadius: "5px", color: t.textDim, padding: "3px 8px", fontSize: "10px", cursor: "pointer", fontFamily: "inherit", marginRight: "4px" }}>
+                                  {expanded ? "▲" : "IRS"}
+                                </button>
+                              )}
+                              <button onClick={() => removeExpense(e.id)}
+                                style={{ background: "none", border: `1px solid ${t.red}44`, borderRadius: "5px", color: t.red, padding: "3px 8px", fontSize: "10px", cursor: "pointer", fontFamily: "inherit" }}>
+                                ✕
+                              </button>
+                            </td>
+                          </tr>
                             {expanded && rule && (
                               <tr key={`${e.id}-irs`} style={{ background: t.irsTagBg }}>
                                 <td colSpan="7" style={{ padding: "10px 16px" }}>
@@ -1159,7 +1255,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                                 </td>
                               </tr>
                             )}
-                          </>
+                          </React.Fragment>
                         );
                       })}
                     </tbody>
@@ -1359,7 +1455,7 @@ function TaxBot({ t, isDark, calc, expenses, w2Income, spouseIncome, bizIncome, 
 
   const buildSystemPrompt = () => {
     const expSummary = expenses.map(e =>
-      `• ${e.vendor} (${e.category}): $${e.amount}/yr, ${Math.round(e.bizPct * 100)}% biz → $${Math.round(calcDeductible(e))} deductible`
+      `• ${e.vendor} (${e.category}): ${fmt(e.inputAmount || e.amount)} per ${e.frequency || "unknown frequency"} → $${Math.round(calcDeductible(e))} deductible`
     ).join("\n");
 
     const missing = [];
@@ -1402,7 +1498,7 @@ ACTION PROTOCOL (Internal only, never mention technical details):
 \`\`\`actions
 [
   { "type": "SET_HOME_OFFICE", "value": 4500 },
-  { "type": "ADD_EXPENSE", "expense": { "vendor": "Chase Mortgage", "category": "Housing & Real Estate", "amount": 24000, "bizPct": 0.12, "status": "Likely Deductible" } },
+  { "type": "ADD_EXPENSE", "expense": { "vendor": "Chase Mortgage", "category": "Housing & Real Estate", "amount": 2000, "frequency": "monthly", "bizPct": 0.12, "status": "Likely Deductible" } },
   { "type": "SET_W2_INCOME", "value": 240000 },
   { "type": "NAVIGATE", "tab": "expenses" }
 ]
@@ -1411,7 +1507,7 @@ ACTION PROTOCOL (Internal only, never mention technical details):
 Available action types:
 - SET_W2_INCOME / SET_SPOUSE_INCOME / SET_W2_WITHHELD / SET_SPOUSE_WITHHELD / SET_BIZ_INCOME — value: number
 - SET_HOME_OFFICE — value: number (dollar amount deductible)
-- ADD_EXPENSE — expense: { vendor, category, amount, bizPct, status } where category must be one of: "Housing & Real Estate", "Utilities", "Software & Subscriptions", "Meals & Entertainment", "Travel & Transportation", "Professional Services", "Education & Development", "Marketing & Advertising", "Equipment & Hardware", "Insurance", "Retirement & Benefits", "Office & Supplies". status MUST be one of: "Likely Deductible", "Partially Deductible", "Needs Facts", "High Scrutiny", "Not Deductible".
+- ADD_EXPENSE — expense: { vendor, category, amount, frequency, bizPct, status } where category must be one of: "Housing & Real Estate", "Utilities", "Software & Subscriptions", "Meals & Entertainment", "Travel & Transportation", "Professional Services", "Education & Development", "Marketing & Advertising", "Equipment & Hardware", "Insurance", "Retirement & Benefits", "Office & Supplies". frequency MUST be one of: "monthly", "annual", "weekly", "quarterly", "one-time". status MUST be one of: "Likely Deductible", "Partially Deductible", "Needs Facts", "High Scrutiny", "Not Deductible".
 - NAVIGATE — tab: "summary" | "expenses" | "income" | "optimizations" | "playbook"
 
 TONE & FORMAT:
