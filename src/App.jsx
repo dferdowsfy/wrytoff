@@ -39,92 +39,92 @@ function marginalRate(ti) {
 // ─────────────────────────────────────────────
 const IRS_LIBRARY = {
   "Housing & Real Estate": [
-    { name: "Mortgage interest",        deductPct: 1.00, bizOnly: false, irsCode: "Sch A / Sch C", notes: "100% deductible (Sch A personal) or home-office % (Sch C). Cap: $750K loan." },
-    { name: "Home office rent",         deductPct: 1.00, bizOnly: true,  irsCode: "Sch C / Form 8829", notes: "Deduct % of rent equal to office sq ft ÷ total home sq ft." },
-    { name: "Property taxes",           deductPct: 1.00, bizOnly: false, irsCode: "Sch A", notes: "Deductible up to $10,000 SALT cap (combined state income + property taxes)." },
-    { name: "HOA fees (home office)",   deductPct: 1.00, bizOnly: true,  irsCode: "Form 8829", notes: "Home-office % of HOA fees is deductible as a business expense." },
-    { name: "Homeowner's insurance",    deductPct: 1.00, bizOnly: true,  irsCode: "Form 8829", notes: "Only the home-office % is deductible. Personal portion is not." },
-    { name: "Repairs & maintenance",    deductPct: 1.00, bizOnly: true,  irsCode: "Form 8829 / Sch C", notes: "Repairs to home-office area: 100% deductible. Whole-home: office % only." },
+    { name: "Mortgage interest", deductPct: 1.00, bizOnly: false, irsCode: "Sch A / Sch C", notes: "100% deductible (Sch A personal) or home-office % (Sch C). Cap: $750K loan." },
+    { name: "Home office rent", deductPct: 1.00, bizOnly: true, irsCode: "Sch C / Form 8829", notes: "Deduct % of rent equal to office sq ft ÷ total home sq ft." },
+    { name: "Property taxes", deductPct: 1.00, bizOnly: false, irsCode: "Sch A", notes: "Deductible up to $10,000 SALT cap (combined state income + property taxes)." },
+    { name: "HOA fees (home office)", deductPct: 1.00, bizOnly: true, irsCode: "Form 8829", notes: "Home-office % of HOA fees is deductible as a business expense." },
+    { name: "Homeowner's insurance", deductPct: 1.00, bizOnly: true, irsCode: "Form 8829", notes: "Only the home-office % is deductible. Personal portion is not." },
+    { name: "Repairs & maintenance", deductPct: 1.00, bizOnly: true, irsCode: "Form 8829 / Sch C", notes: "Repairs to home-office area: 100% deductible. Whole-home: office % only." },
   ],
   "Utilities": [
-    { name: "Electricity",              deductPct: 1.00, bizOnly: true,  irsCode: "Form 8829", notes: "Deduct home-office % (typically 5–15% of sq ft). Keep bills." },
-    { name: "Gas / heating",            deductPct: 1.00, bizOnly: true,  irsCode: "Form 8829", notes: "Home-office % deductible. Same allocation method as electricity." },
-    { name: "Water & sewer",            deductPct: 1.00, bizOnly: true,  irsCode: "Form 8829", notes: "Home-office % deductible. Typically small but legitimate." },
-    { name: "Internet / WiFi",          deductPct: 1.00, bizOnly: true,  irsCode: "Sch C", notes: "Business-use % deductible. Keep records if also used personally." },
-    { name: "Phone (mobile)",           deductPct: 1.00, bizOnly: true,  irsCode: "Sch C", notes: "Business-use % only. IRS expects 50–80% for most professionals." },
+    { name: "Electricity", deductPct: 1.00, bizOnly: true, irsCode: "Form 8829", notes: "Deduct home-office % (typically 5–15% of sq ft). Keep bills." },
+    { name: "Gas / heating", deductPct: 1.00, bizOnly: true, irsCode: "Form 8829", notes: "Home-office % deductible. Same allocation method as electricity." },
+    { name: "Water & sewer", deductPct: 1.00, bizOnly: true, irsCode: "Form 8829", notes: "Home-office % deductible. Typically small but legitimate." },
+    { name: "Internet / WiFi", deductPct: 1.00, bizOnly: true, irsCode: "Sch C", notes: "Business-use % deductible. Keep records if also used personally." },
+    { name: "Phone (mobile)", deductPct: 1.00, bizOnly: true, irsCode: "Sch C", notes: "Business-use % only. IRS expects 50–80% for most professionals." },
     { name: "Landline (dedicated biz)", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible if the line is used exclusively for business." },
   ],
   "Software & Subscriptions": [
     { name: "AI tools (ChatGPT/Claude)", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible as ordinary and necessary business expense." },
-    { name: "SaaS / productivity apps",  deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes project management, CRM, design tools." },
-    { name: "Cloud storage",             deductPct: 1.00, bizOnly: true,  irsCode: "Sch C", notes: "Business-use % if personal files also stored. Document allocation." },
-    { name: "Domain & hosting",          deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes DNS, SSL, CDN, and server costs." },
-    { name: "Security software",         deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes antivirus, VPN, password managers." },
-    { name: "Video conferencing",        deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible (Zoom, Teams, etc.) when used for business." },
+    { name: "SaaS / productivity apps", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes project management, CRM, design tools." },
+    { name: "Cloud storage", deductPct: 1.00, bizOnly: true, irsCode: "Sch C", notes: "Business-use % if personal files also stored. Document allocation." },
+    { name: "Domain & hosting", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes DNS, SSL, CDN, and server costs." },
+    { name: "Security software", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes antivirus, VPN, password managers." },
+    { name: "Video conferencing", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible (Zoom, Teams, etc.) when used for business." },
   ],
   "Meals & Entertainment": [
-    { name: "Client meals",             deductPct: 0.50, bizOnly: false, irsCode: "Sch C §274(n)", notes: "50% deductible. Must have business purpose + document client name." },
-    { name: "Business travel meals",    deductPct: 0.50, bizOnly: false, irsCode: "Sch C §274(n)", notes: "50% deductible while traveling overnight for business." },
-    { name: "Office snacks / coffee",   deductPct: 0.50, bizOnly: false, irsCode: "Sch C §274(n)", notes: "50% deductible if provided for business meetings or staff." },
+    { name: "Client meals", deductPct: 0.50, bizOnly: false, irsCode: "Sch C §274(n)", notes: "50% deductible. Must have business purpose + document client name." },
+    { name: "Business travel meals", deductPct: 0.50, bizOnly: false, irsCode: "Sch C §274(n)", notes: "50% deductible while traveling overnight for business." },
+    { name: "Office snacks / coffee", deductPct: 0.50, bizOnly: false, irsCode: "Sch C §274(n)", notes: "50% deductible if provided for business meetings or staff." },
     { name: "Entertainment (pre-2018)", deductPct: 0.00, bizOnly: false, irsCode: "TCJA 2017", notes: "0% — entertainment expenses eliminated by Tax Cuts and Jobs Act." },
   ],
   "Travel & Transportation": [
-    { name: "Mileage (standard rate)",  deductPct: 1.00, bizOnly: false, irsCode: "Sch C Rev. Proc.", notes: "$0.70/mile in 2026. Log date, destination, business purpose. Cannot combine with actual expenses." },
-    { name: "Actual vehicle expenses",  deductPct: 1.00, bizOnly: true,  irsCode: "Sch C", notes: "Business-use % of gas, insurance, depreciation. Cannot combine with mileage method." },
-    { name: "Airfare (business)",       deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business trips. Mixed trips: allocate business days." },
-    { name: "Hotel / lodging",          deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business nights. Document business purpose." },
-    { name: "Rideshare (Uber/Lyft)",    deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business trips. Keep receipts; note purpose." },
-    { name: "Parking & tolls",          deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business travel. Even with standard mileage." },
-    { name: "Public transit (business)",deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible when traveling for business purposes." },
+    { name: "Mileage (standard rate)", deductPct: 1.00, bizOnly: false, irsCode: "Sch C Rev. Proc.", notes: "$0.70/mile in 2026. Log date, destination, business purpose. Cannot combine with actual expenses." },
+    { name: "Actual vehicle expenses", deductPct: 1.00, bizOnly: true, irsCode: "Sch C", notes: "Business-use % of gas, insurance, depreciation. Cannot combine with mileage method." },
+    { name: "Airfare (business)", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business trips. Mixed trips: allocate business days." },
+    { name: "Hotel / lodging", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business nights. Document business purpose." },
+    { name: "Rideshare (Uber/Lyft)", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business trips. Keep receipts; note purpose." },
+    { name: "Parking & tolls", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business travel. Even with standard mileage." },
+    { name: "Public transit (business)", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible when traveling for business purposes." },
   ],
   "Professional Services": [
-    { name: "Accounting / CPA fees",    deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business portion. Personal tax prep on Sch A." },
-    { name: "Legal fees (business)",    deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business-related legal services." },
+    { name: "Accounting / CPA fees", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business portion. Personal tax prep on Sch A." },
+    { name: "Legal fees (business)", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business-related legal services." },
     { name: "Consulting fees paid out", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Issue 1099-NEC if $600+ to any single contractor." },
-    { name: "Business coaching",        deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible if directly related to your business operations." },
-    { name: "Recruiting fees",          deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes background check and staffing agency fees." },
+    { name: "Business coaching", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible if directly related to your business operations." },
+    { name: "Recruiting fees", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes background check and staffing agency fees." },
   ],
   "Education & Development": [
     { name: "Courses & certifications", deductPct: 1.00, bizOnly: false, irsCode: "Sch C §162", notes: "100% deductible if maintains or improves current business skills. Not for new career." },
-    { name: "Books & publications",     deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible if related to your trade or profession." },
-    { name: "Conference / events",      deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible (registration, travel). 50% on meals at conference." },
+    { name: "Books & publications", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible if related to your trade or profession." },
+    { name: "Conference / events", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible (registration, travel). 50% on meals at conference." },
     { name: "Professional memberships", deductPct: 1.00, bizOnly: false, irsCode: "Sch C §162(e)", notes: "100% deductible for trade/professional orgs. Civic clubs are not." },
   ],
   "Marketing & Advertising": [
-    { name: "Advertising (digital)",    deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes Google Ads, LinkedIn, Meta campaigns." },
-    { name: "Website design",           deductPct: 1.00, bizOnly: false, irsCode: "Sch C / §179", notes: "100% deductible or Section 179 if treated as asset. Amortize if capitalized." },
-    { name: "Business cards & print",   deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible as ordinary marketing expense." },
-    { name: "Branding & logo design",   deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible in the year incurred if under $5,000." },
-    { name: "PR / media outreach",      deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible as business promotion expense." },
+    { name: "Advertising (digital)", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes Google Ads, LinkedIn, Meta campaigns." },
+    { name: "Website design", deductPct: 1.00, bizOnly: false, irsCode: "Sch C / §179", notes: "100% deductible or Section 179 if treated as asset. Amortize if capitalized." },
+    { name: "Business cards & print", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible as ordinary marketing expense." },
+    { name: "Branding & logo design", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible in the year incurred if under $5,000." },
+    { name: "PR / media outreach", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible as business promotion expense." },
   ],
   "Equipment & Hardware": [
-    { name: "Computer / laptop",        deductPct: 1.00, bizOnly: true,  irsCode: "§179 / Sch C", notes: "100% deductible via Section 179 if under $1M limit. Business-use % if mixed-use." },
-    { name: "Monitor / display",        deductPct: 1.00, bizOnly: true,  irsCode: "§179 / Sch C", notes: "100% deductible via Section 179 if used for business." },
-    { name: "Keyboard / mouse / desk",  deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible as ordinary office supplies or equipment." },
-    { name: "Camera / recording gear",  deductPct: 1.00, bizOnly: true,  irsCode: "§179 / Sch C", notes: "Business-use % deductible. Full Section 179 if exclusively for biz." },
-    { name: "Office furniture",         deductPct: 1.00, bizOnly: true,  irsCode: "§179 / Sch C", notes: "100% if in dedicated home office. Otherwise home-office % only." },
-    { name: "Smartphone (business)",    deductPct: 1.00, bizOnly: true,  irsCode: "Sch C", notes: "Business-use % deductible. Document personal vs. business split." },
+    { name: "Computer / laptop", deductPct: 1.00, bizOnly: true, irsCode: "§179 / Sch C", notes: "100% deductible via Section 179 if under $1M limit. Business-use % if mixed-use." },
+    { name: "Monitor / display", deductPct: 1.00, bizOnly: true, irsCode: "§179 / Sch C", notes: "100% deductible via Section 179 if used for business." },
+    { name: "Keyboard / mouse / desk", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible as ordinary office supplies or equipment." },
+    { name: "Camera / recording gear", deductPct: 1.00, bizOnly: true, irsCode: "§179 / Sch C", notes: "Business-use % deductible. Full Section 179 if exclusively for biz." },
+    { name: "Office furniture", deductPct: 1.00, bizOnly: true, irsCode: "§179 / Sch C", notes: "100% if in dedicated home office. Otherwise home-office % only." },
+    { name: "Smartphone (business)", deductPct: 1.00, bizOnly: true, irsCode: "Sch C", notes: "Business-use % deductible. Document personal vs. business split." },
   ],
   "Insurance": [
     { name: "Self-employed health ins.", deductPct: 1.00, bizOnly: false, irsCode: "§162(l)", notes: "100% above-the-line deduction. Cannot exceed net SE income. Not if eligible for employer plan." },
-    { name: "Dental & vision ins.",     deductPct: 1.00, bizOnly: false, irsCode: "§162(l)", notes: "100% deductible under self-employed health insurance if not employer-covered." },
-    { name: "Business liability ins.",  deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes E&O, general liability, cyber coverage." },
+    { name: "Dental & vision ins.", deductPct: 1.00, bizOnly: false, irsCode: "§162(l)", notes: "100% deductible under self-employed health insurance if not employer-covered." },
+    { name: "Business liability ins.", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes E&O, general liability, cyber coverage." },
     { name: "Life ins. (business key)", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "Deductible only if business is the beneficiary (key-person policy)." },
-    { name: "Disability insurance",     deductPct: 0.00, bizOnly: false, irsCode: "IRS Pub. 535", notes: "Not deductible as business expense — but benefits received are tax-free." },
+    { name: "Disability insurance", deductPct: 0.00, bizOnly: false, irsCode: "IRS Pub. 535", notes: "Not deductible as business expense — but benefits received are tax-free." },
   ],
   "Retirement & Benefits": [
-    { name: "SEP-IRA contribution",     deductPct: 1.00, bizOnly: false, irsCode: "§404(h)", notes: "Up to 25% of net SE income, max $69,000 (2026). Above-the-line AGI deduction." },
-    { name: "Solo 401(k) — employee",   deductPct: 1.00, bizOnly: false, irsCode: "§402(g)", notes: "Up to $23,000 employee deferral ($30,500 if 50+). Reduces AGI directly." },
-    { name: "Solo 401(k) — employer",   deductPct: 1.00, bizOnly: false, irsCode: "§404", notes: "Up to 25% of net SE income as employer contribution. Combined cap $69,000." },
-    { name: "SIMPLE IRA",               deductPct: 1.00, bizOnly: false, irsCode: "§408(p)", notes: "Up to $16,000 ($19,500 if 50+). Must have no other qualified plan." },
-    { name: "Health Savings Account",   deductPct: 1.00, bizOnly: false, irsCode: "§223", notes: "$4,300 single / $8,550 family (2026). Must have HDHP. Triple tax advantage." },
+    { name: "SEP-IRA contribution", deductPct: 1.00, bizOnly: false, irsCode: "§404(h)", notes: "Up to 25% of net SE income, max $69,000 (2026). Above-the-line AGI deduction." },
+    { name: "Solo 401(k) — employee", deductPct: 1.00, bizOnly: false, irsCode: "§402(g)", notes: "Up to $23,000 employee deferral ($30,500 if 50+). Reduces AGI directly." },
+    { name: "Solo 401(k) — employer", deductPct: 1.00, bizOnly: false, irsCode: "§404", notes: "Up to 25% of net SE income as employer contribution. Combined cap $69,000." },
+    { name: "SIMPLE IRA", deductPct: 1.00, bizOnly: false, irsCode: "§408(p)", notes: "Up to $16,000 ($19,500 if 50+). Must have no other qualified plan." },
+    { name: "Health Savings Account", deductPct: 1.00, bizOnly: false, irsCode: "§223", notes: "$4,300 single / $8,550 family (2026). Must have HDHP. Triple tax advantage." },
   ],
   "Office & Supplies": [
-    { name: "Office supplies",          deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Pens, paper, toner, postage, staples, etc." },
-    { name: "Postage & shipping",       deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business shipments and correspondence." },
-    { name: "Printed materials",        deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Proposals, contracts, presentations." },
-    { name: "Bank / payment fees",      deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes merchant fees, wire fees, Stripe processing." },
-    { name: "Coworking / office rent",  deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Dedicated desk or private office lease." },
+    { name: "Office supplies", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Pens, paper, toner, postage, staples, etc." },
+    { name: "Postage & shipping", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible for business shipments and correspondence." },
+    { name: "Printed materials", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Proposals, contracts, presentations." },
+    { name: "Bank / payment fees", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Includes merchant fees, wire fees, Stripe processing." },
+    { name: "Coworking / office rent", deductPct: 1.00, bizOnly: false, irsCode: "Sch C", notes: "100% deductible. Dedicated desk or private office lease." },
   ],
 };
 
@@ -134,25 +134,25 @@ const ALL_CATEGORY_NAMES = Object.keys(IRS_LIBRARY);
 // INITIAL DATA
 // ─────────────────────────────────────────────
 const INITIAL_EXPENSES = [
-  { id: 1,  vendor: "Anthropic",       category: "Software & Subscriptions", amount: 20,   bizPct: 1.00 },
-  { id: 2,  vendor: "YouTube Premium", category: "Software & Subscriptions", amount: 20,   bizPct: 1.00 },
-  { id: 3,  vendor: "Gemini",          category: "Software & Subscriptions", amount: 20,   bizPct: 1.00 },
-  { id: 4,  vendor: "ChatGPT",         category: "Software & Subscriptions", amount: 20,   bizPct: 1.00 },
-  { id: 5,  vendor: "Apple iCloud",    category: "Software & Subscriptions", amount: 32,   bizPct: 1.00 },
-  { id: 6,  vendor: "Cursor",          category: "Software & Subscriptions", amount: 40,   bizPct: 1.00 },
-  { id: 7,  vendor: "WiFi",            category: "Utilities",                amount: 70,   bizPct: 0.70 },
-  { id: 8,  vendor: "Google Hosting",  category: "Software & Subscriptions", amount: 30,   bizPct: 1.00 },
-  { id: 9,  vendor: "GoDaddy",         category: "Software & Subscriptions", amount: 50,   bizPct: 1.00 },
-  { id: 10, vendor: "Phone",           category: "Utilities",                amount: 120,  bizPct: 0.80 },
-  { id: 11, vendor: "Electricity",     category: "Utilities",                amount: 300,  bizPct: 0.05 },
-  { id: 12, vendor: "Water",           category: "Utilities",                amount: 400,  bizPct: 0.05 },
-  { id: 13, vendor: "Client Meals",    category: "Meals & Entertainment",    amount: 5000, bizPct: 0.50 },
-  { id: 14, vendor: "Uber",            category: "Travel & Transportation",  amount: 200,  bizPct: 1.00 },
-  { id: 15, vendor: "OpenRouter",      category: "Software & Subscriptions", amount: 42,   bizPct: 1.00 },
+  { id: 1, vendor: "Anthropic", category: "Software & Subscriptions", amount: 20, bizPct: 1.00 },
+  { id: 2, vendor: "YouTube Premium", category: "Software & Subscriptions", amount: 20, bizPct: 1.00 },
+  { id: 3, vendor: "Gemini", category: "Software & Subscriptions", amount: 20, bizPct: 1.00 },
+  { id: 4, vendor: "ChatGPT", category: "Software & Subscriptions", amount: 20, bizPct: 1.00 },
+  { id: 5, vendor: "Apple iCloud", category: "Software & Subscriptions", amount: 32, bizPct: 1.00 },
+  { id: 6, vendor: "Cursor", category: "Software & Subscriptions", amount: 40, bizPct: 1.00 },
+  { id: 7, vendor: "WiFi", category: "Utilities", amount: 70, bizPct: 0.70 },
+  { id: 8, vendor: "Google Hosting", category: "Software & Subscriptions", amount: 30, bizPct: 1.00 },
+  { id: 9, vendor: "GoDaddy", category: "Software & Subscriptions", amount: 50, bizPct: 1.00 },
+  { id: 10, vendor: "Phone", category: "Utilities", amount: 120, bizPct: 0.80 },
+  { id: 11, vendor: "Electricity", category: "Utilities", amount: 300, bizPct: 0.05 },
+  { id: 12, vendor: "Water", category: "Utilities", amount: 400, bizPct: 0.05 },
+  { id: 13, vendor: "Client Meals", category: "Meals & Entertainment", amount: 5000, bizPct: 0.50 },
+  { id: 14, vendor: "Uber", category: "Travel & Transportation", amount: 200, bizPct: 1.00 },
+  { id: 15, vendor: "OpenRouter", category: "Software & Subscriptions", amount: 42, bizPct: 1.00 },
 ];
 const INITIAL_ASSETS = [
   { id: 1, item: "MacBook Pro", cost: 1200, method: "Section 179" },
-  { id: 2, item: "Keyboard",    cost: 50,   method: "Expense" },
+  { id: 2, item: "Keyboard", cost: 50, method: "Expense" },
 ];
 
 function getIrsRule(category, vendor) {
@@ -181,7 +181,7 @@ const fmt = (n) => "$" + Math.round(Math.abs(n)).toLocaleString();
 const fmtK = (n) => {
   const abs = Math.round(Math.abs(n));
   if (abs >= 1000000) return "$" + (abs / 1000000).toFixed(1) + "M";
-  if (abs >= 10000)   return "$" + (abs / 1000).toFixed(0) + "K";
+  if (abs >= 10000) return "$" + (abs / 1000).toFixed(0) + "K";
   return "$" + abs.toLocaleString();
 };
 const pct = (n) => (n * 100).toFixed(0) + "%";
@@ -207,23 +207,23 @@ const DARK = {
   modalBg: "#111827", modalOverlay: "rgba(0,0,0,0.7)",
   irsTagBg: "#1a2a1a", irsTagText: "#86efac", irsTagBorder: "#22c55e33",
   catColors: {
-    "Housing & Real Estate":   { bg:"#1a1a0f", accent:"#f59e0b", text:"#fcd34d" },
-    "Utilities":               { bg:"#1a1f2a", accent:"#06b6d4", text:"#67e8f9" },
-    "Software & Subscriptions":{ bg:"#0f2744", accent:"#3b82f6", text:"#93c5fd" },
-    "Meals & Entertainment":   { bg:"#2a1212", accent:"#ef4444", text:"#fca5a5" },
-    "Travel & Transportation": { bg:"#1a2a1a", accent:"#22c55e", text:"#86efac" },
-    "Professional Services":   { bg:"#1e1a2e", accent:"#8b5cf6", text:"#c4b5fd" },
-    "Education & Development": { bg:"#0f2a1e", accent:"#10b981", text:"#6ee7b7" },
-    "Marketing & Advertising": { bg:"#2a1a0f", accent:"#f97316", text:"#fdba74" },
-    "Equipment & Hardware":    { bg:"#1a2a1a", accent:"#22c55e", text:"#86efac" },
-    "Insurance":               { bg:"#1a1a2a", accent:"#818cf8", text:"#c7d2fe" },
-    "Retirement & Benefits":   { bg:"#0f2744", accent:"#3b82f6", text:"#93c5fd" },
-    "Office & Supplies":       { bg:"#1a1a0f", accent:"#f59e0b", text:"#fcd34d" },
+    "Housing & Real Estate": { bg: "#1a1a0f", accent: "#f59e0b", text: "#fcd34d" },
+    "Utilities": { bg: "#1a1f2a", accent: "#06b6d4", text: "#67e8f9" },
+    "Software & Subscriptions": { bg: "#0f2744", accent: "#3b82f6", text: "#93c5fd" },
+    "Meals & Entertainment": { bg: "#2a1212", accent: "#ef4444", text: "#fca5a5" },
+    "Travel & Transportation": { bg: "#1a2a1a", accent: "#22c55e", text: "#86efac" },
+    "Professional Services": { bg: "#1e1a2e", accent: "#8b5cf6", text: "#c4b5fd" },
+    "Education & Development": { bg: "#0f2a1e", accent: "#10b981", text: "#6ee7b7" },
+    "Marketing & Advertising": { bg: "#2a1a0f", accent: "#f97316", text: "#fdba74" },
+    "Equipment & Hardware": { bg: "#1a2a1a", accent: "#22c55e", text: "#86efac" },
+    "Insurance": { bg: "#1a1a2a", accent: "#818cf8", text: "#c7d2fe" },
+    "Retirement & Benefits": { bg: "#0f2744", accent: "#3b82f6", text: "#93c5fd" },
+    "Office & Supplies": { bg: "#1a1a0f", accent: "#f59e0b", text: "#fcd34d" },
   },
   optColors: {
-    high:   { bg:"#0f2a1e", accent:"#10b981" },
-    medium: { bg:"#0f2744", accent:"#3b82f6" },
-    low:    { bg:"#1e1a2e", accent:"#8b5cf6" },
+    high: { bg: "#0f2a1e", accent: "#10b981" },
+    medium: { bg: "#0f2744", accent: "#3b82f6" },
+    low: { bg: "#1e1a2e", accent: "#8b5cf6" },
   },
 };
 const LIGHT = {
@@ -243,23 +243,23 @@ const LIGHT = {
   modalBg: "#ffffff", modalOverlay: "rgba(0,0,0,0.4)",
   irsTagBg: "#f0fdf4", irsTagText: "#15803d", irsTagBorder: "#16a34a33",
   catColors: {
-    "Housing & Real Estate":   { bg:"#fffbeb", accent:"#d97706", text:"#b45309" },
-    "Utilities":               { bg:"#ecfeff", accent:"#0891b2", text:"#0e7490" },
-    "Software & Subscriptions":{ bg:"#eff6ff", accent:"#2563eb", text:"#1d4ed8" },
-    "Meals & Entertainment":   { bg:"#fef2f2", accent:"#dc2626", text:"#b91c1c" },
-    "Travel & Transportation": { bg:"#f0fdf4", accent:"#15803d", text:"#166534" },
-    "Professional Services":   { bg:"#faf5ff", accent:"#7c3aed", text:"#6d28d9" },
-    "Education & Development": { bg:"#f0fdf4", accent:"#16a34a", text:"#15803d" },
-    "Marketing & Advertising": { bg:"#fff7ed", accent:"#ea580c", text:"#c2410c" },
-    "Equipment & Hardware":    { bg:"#f0fdf4", accent:"#15803d", text:"#166534" },
-    "Insurance":               { bg:"#eef2ff", accent:"#4f46e5", text:"#4338ca" },
-    "Retirement & Benefits":   { bg:"#eff6ff", accent:"#2563eb", text:"#1d4ed8" },
-    "Office & Supplies":       { bg:"#fffbeb", accent:"#d97706", text:"#b45309" },
+    "Housing & Real Estate": { bg: "#fffbeb", accent: "#d97706", text: "#b45309" },
+    "Utilities": { bg: "#ecfeff", accent: "#0891b2", text: "#0e7490" },
+    "Software & Subscriptions": { bg: "#eff6ff", accent: "#2563eb", text: "#1d4ed8" },
+    "Meals & Entertainment": { bg: "#fef2f2", accent: "#dc2626", text: "#b91c1c" },
+    "Travel & Transportation": { bg: "#f0fdf4", accent: "#15803d", text: "#166534" },
+    "Professional Services": { bg: "#faf5ff", accent: "#7c3aed", text: "#6d28d9" },
+    "Education & Development": { bg: "#f0fdf4", accent: "#16a34a", text: "#15803d" },
+    "Marketing & Advertising": { bg: "#fff7ed", accent: "#ea580c", text: "#c2410c" },
+    "Equipment & Hardware": { bg: "#f0fdf4", accent: "#15803d", text: "#166534" },
+    "Insurance": { bg: "#eef2ff", accent: "#4f46e5", text: "#4338ca" },
+    "Retirement & Benefits": { bg: "#eff6ff", accent: "#2563eb", text: "#1d4ed8" },
+    "Office & Supplies": { bg: "#fffbeb", accent: "#d97706", text: "#b45309" },
   },
   optColors: {
-    high:   { bg:"#f0fdf4", accent:"#16a34a" },
-    medium: { bg:"#eff6ff", accent:"#2563eb" },
-    low:    { bg:"#faf5ff", accent:"#7c3aed" },
+    high: { bg: "#f0fdf4", accent: "#16a34a" },
+    medium: { bg: "#eff6ff", accent: "#2563eb" },
+    low: { bg: "#faf5ff", accent: "#7c3aed" },
   },
 };
 
@@ -268,18 +268,18 @@ const LIGHT = {
 // ─────────────────────────────────────────────
 function AddExpenseModal({ onAdd, onClose, t }) {
   const [selectedGroup, setSelectedGroup] = useState(ALL_CATEGORY_NAMES[0]);
-  const [selectedRule, setSelectedRule]   = useState(null);
-  const [vendor, setVendor]   = useState("");
-  const [amount, setAmount]   = useState("");
-  const [bizPct, setBizPct]   = useState(1.00);
+  const [selectedRule, setSelectedRule] = useState(null);
+  const [vendor, setVendor] = useState("");
+  const [amount, setAmount] = useState("");
+  const [bizPct, setBizPct] = useState(1.00);
 
   const group = IRS_LIBRARY[selectedGroup] || [];
 
   const selectRule = (rule) => {
     setSelectedRule(rule);
     setBizPct(rule.deductPct === 0.50 ? 0.50 :
-              selectedGroup === "Utilities" ? 0.70 :
-              selectedGroup === "Housing & Real Estate" ? 0.10 : 1.00);
+      selectedGroup === "Utilities" ? 0.70 :
+        selectedGroup === "Housing & Real Estate" ? 0.10 : 1.00);
     if (!vendor) setVendor(rule.name);
   };
 
@@ -465,19 +465,19 @@ function DeductionPlaybook({ t }) {
                 <div style={{ borderTop: `1px solid ${t.border}` }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", padding: "16px", background: t.surface2 }}>
                     <div style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: "8px", padding: "12px" }}>
-                      <div style={{ fontSize: "11px", fontWeight:"700", color: t.greenMid, marginBottom: "6px", letterSpacing: "0.5px" }}>GENERALLY QUALIFIES</div>
+                      <div style={{ fontSize: "11px", fontWeight: "700", color: t.greenMid, marginBottom: "6px", letterSpacing: "0.5px" }}>GENERALLY QUALIFIES</div>
                       <div style={{ fontSize: "12px", color: t.textDim, lineHeight: "1.4" }}>{meta.qualifies}</div>
                     </div>
                     <div style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: "8px", padding: "12px" }}>
-                      <div style={{ fontSize: "11px", fontWeight:"700", color: t.redMid, marginBottom: "6px", letterSpacing: "0.5px" }}>DOES NOT QUALIFY</div>
+                      <div style={{ fontSize: "11px", fontWeight: "700", color: t.redMid, marginBottom: "6px", letterSpacing: "0.5px" }}>DOES NOT QUALIFY</div>
                       <div style={{ fontSize: "12px", color: t.textDim, lineHeight: "1.4" }}>{meta.notQualifies}</div>
                     </div>
                     <div style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: "8px", padding: "12px" }}>
-                      <div style={{ fontSize: "11px", fontWeight:"700", color: t.orange, marginBottom: "6px", letterSpacing: "0.5px" }}>COMMON MISTAKES</div>
+                      <div style={{ fontSize: "11px", fontWeight: "700", color: t.orange, marginBottom: "6px", letterSpacing: "0.5px" }}>COMMON MISTAKES</div>
                       <div style={{ fontSize: "12px", color: t.textDim, lineHeight: "1.4" }}>{meta.mistakes}</div>
                     </div>
                     <div style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: "8px", padding: "12px" }}>
-                      <div style={{ fontSize: "11px", fontWeight:"700", color: t.blue, marginBottom: "6px", letterSpacing: "0.5px" }}>REQUIRED RECORDS</div>
+                      <div style={{ fontSize: "11px", fontWeight: "700", color: t.blue, marginBottom: "6px", letterSpacing: "0.5px" }}>REQUIRED RECORDS</div>
                       <div style={{ fontSize: "12px", color: t.textDim, lineHeight: "1.4" }}>{meta.records}</div>
                     </div>
                   </div>
@@ -541,16 +541,42 @@ function W2Uploader({ onParsed, t }) {
         { type: isPDF ? "document" : "image", source: { type: "base64", media_type: isPDF ? "application/pdf" : file.type, data: base64 } },
         { type: "text", text: `Parse this W-2. Return ONLY valid JSON no markdown:{"employerName":null,"employeeName":null,"box1_wages":null,"box2_federalWithheld":null,"box4_socialSecurityWithheld":null,"box6_medicareWithheld":null,"box16_stateWages":null,"box17_stateTax":null,"taxYear":null}` },
       ];
-      const resp = await fetch("/api/parse-w2", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "openai/gpt-5.4-nano", messages: [{ role: "user", content }] }),
-      });
-      const data = await resp.json();
-      // Handle both string format (OpenRouter proxy) and array format (Anthropic direct)
-      const raw = typeof data.content === "string" 
-        ? data.content 
-        : (Array.isArray(data.content) ? data.content.find(b => b.type === "text")?.text : "") || "";
-      const result = JSON.parse(raw.replace(/```json|```/g, "").trim());
+
+      const key = import.meta.env.VITE_OPENROUTER_API_KEY;
+      let result;
+
+      if (key) {
+        // Direct OpenRouter call for Vercel/Static deployments
+        const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+          body: JSON.stringify({
+            model: "anthropic/claude-3.5-sonnet",
+            messages: [{
+              role: "user",
+              content: content.map(c => {
+                if (c.type === "image" || c.type === "document") {
+                  return { type: "image_url", image_url: { url: `data:${c.source.media_type};base64,${c.source.data}` } };
+                }
+                return c;
+              })
+            }]
+          }),
+        });
+        const data = await resp.json();
+        const raw = data.choices?.[0]?.message?.content || "";
+        result = JSON.parse(raw.replace(/```json|```/g, "").trim());
+      } else {
+        // Fallback to local server proxy
+        const resp = await fetch("/api/parse-w2", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "openai/gpt-5.4-nano", messages: [{ role: "user", content }] }),
+        });
+        const data = await resp.json();
+        const raw = typeof data.content === "string" ? data.content : (Array.isArray(data.content) ? data.content.find(b => b.type === "text")?.text : "") || "";
+        result = JSON.parse(raw.replace(/```json|```/g, "").trim());
+      }
+
       setParsed(result); onParsed(result); setStatus("done");
     } catch (err) { console.error(err); setStatus("error"); }
   };
@@ -567,7 +593,7 @@ function W2Uploader({ onParsed, t }) {
           onDrop={e => { e.preventDefault(); setDragging(false); parseW2(e.dataTransfer.files[0]); }}
           style={{ background: dragging ? t.uploadDragBg : t.uploadBg, border: `2px dashed ${borderColor}`, borderRadius: "10px", padding: "24px 20px", textAlign: "center", cursor: "pointer", transition: "all 0.15s" }}>
           <input ref={fileRef} type="file" accept=".pdf,image/*" style={{ display: "none" }} onChange={e => parseW2(e.target.files[0])} />
-          {status === "idle" && (<><div style={{ fontSize: "24px", marginBottom: "6px" }}>📄</div><div style={{ fontSize: "13px", fontWeight: "600", color: t.text, marginBottom: "3px" }}>Drop wife's W-2 or click to browse</div><div style={{ fontSize: "12px", color: t.textDim }}>PDF or image · Box 1 & 2 auto-extracted</div></>)}
+          {status === "idle" && (<><div style={{ fontSize: "24px", marginBottom: "6px" }}>📄</div><div style={{ fontSize: "13px", fontWeight: "600", color: t.text, marginBottom: "3px" }}>Drop W-2 or click to browse</div><div style={{ fontSize: "12px", color: t.textDim }}>PDF or image · Box 1 & 2 auto-extracted</div></>)}
           {status === "loading" && (<><style>{`@keyframes ks{to{transform:rotate(360deg)}}`}</style><div style={{ fontSize: "22px", display: "inline-block", animation: "ks 0.9s linear infinite", marginBottom: "6px" }}>⟳</div><div style={{ fontSize: "13px", color: t.textMuted }}>Reading W-2…</div></>)}
           {status === "error" && (<><div style={{ fontSize: "22px", marginBottom: "6px" }}>⚠️</div><div style={{ fontSize: "13px", color: t.red }}>Parse failed — try a clearer file</div><div style={{ fontSize: "12px", color: t.textDim, marginTop: "3px" }}>Click to retry</div></>)}
         </div>
@@ -579,7 +605,7 @@ function W2Uploader({ onParsed, t }) {
             <button onClick={() => { setStatus("idle"); setParsed(null); }} style={{ background: "none", border: `1px solid ${t.border2}`, borderRadius: "5px", color: t.textDim, padding: "3px 10px", fontSize: "11px", cursor: "pointer", fontFamily: "inherit" }}>Replace</button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "7px" }}>
-            {[["Employee", parsed.employeeName],["Employer", parsed.employerName],["Tax year", parsed.taxYear],["Box 1 wages", parsed.box1_wages != null ? fmt(parsed.box1_wages) : null],["Box 2 withheld", parsed.box2_federalWithheld != null ? fmt(parsed.box2_federalWithheld) : null],["Box 6 medicare", parsed.box6_medicareWithheld != null ? fmt(parsed.box6_medicareWithheld) : null]].map(([label, val]) => (
+            {[["Employee", parsed.employeeName], ["Employer", parsed.employerName], ["Tax year", parsed.taxYear], ["Box 1 wages", parsed.box1_wages != null ? fmt(parsed.box1_wages) : null], ["Box 2 withheld", parsed.box2_federalWithheld != null ? fmt(parsed.box2_federalWithheld) : null], ["Box 6 medicare", parsed.box6_medicareWithheld != null ? fmt(parsed.box6_medicareWithheld) : null]].map(([label, val]) => (
               <div key={label} style={{ background: t.surface2, borderRadius: "6px", padding: "7px 9px" }}>
                 <div style={{ fontSize: "10px", color: t.textDim, marginBottom: "2px" }}>{label.toUpperCase()}</div>
                 <div style={{ fontSize: "12px", fontWeight: "600", color: t.text, fontFamily: "'DM Mono',monospace" }}>{val ?? "—"}</div>
@@ -601,18 +627,18 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   const t = isDark ? DARK : LIGHT;
 
   const td = userProfile?.taxData || {};
-  const [expenses, setExpenses]             = useState(td.expenses || []);
-  const [w2Income, setW2Income]             = useState(td.w2Income || 0);
-  const [spouseIncome, setSpouseIncome]     = useState(td.spouseIncome || 0);
-  const [w2Withheld, setW2Withheld]         = useState(td.w2Withheld || 0);
+  const [expenses, setExpenses] = useState(td.expenses || []);
+  const [w2Income, setW2Income] = useState(td.w2Income || 0);
+  const [spouseIncome, setSpouseIncome] = useState(td.spouseIncome || 0);
+  const [w2Withheld, setW2Withheld] = useState(td.w2Withheld || 0);
   const [spouseWithheld, setSpouseWithheld] = useState(td.spouseWithheld || 0);
-  const [bizIncome, setBizIncome]           = useState(td.bizIncome || 0);
-  const [homeOfficeDed, setHomeOfficeDed]   = useState(td.homeOfficeDed || 0);
-  const [activeTab, setActiveTab]           = useState("summary");
-  const [showAddModal, setShowAddModal]     = useState(false);
-  const [expandedRow, setExpandedRow]       = useState(null);
-  const [flashFields, setFlashFields]       = useState({});
-  const [scenario, setScenario]             = useState(td.scenario || { posture: "Standard", sepIra: 0, healthIns: 0, mileage: 0 });
+  const [bizIncome, setBizIncome] = useState(td.bizIncome || 0);
+  const [homeOfficeDed, setHomeOfficeDed] = useState(td.homeOfficeDed || 0);
+  const [activeTab, setActiveTab] = useState("summary");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [expandedRow, setExpandedRow] = useState(null);
+  const [flashFields, setFlashFields] = useState({});
+  const [scenario, setScenario] = useState(td.scenario || { posture: "Standard", sepIra: 0, healthIns: 0, mileage: 0 });
 
   // Native cloud serialization layer
   useEffect(() => {
@@ -640,12 +666,12 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
     const fieldsChanged = {};
     actions.forEach(action => {
       switch (action.type) {
-        case "SET_W2_INCOME":       setW2Income(action.value);       fieldsChanged.w2Income = true; break;
-        case "SET_SPOUSE_INCOME":   setSpouseIncome(action.value);   fieldsChanged.spouseIncome = true; break;
-        case "SET_W2_WITHHELD":     setW2Withheld(action.value);     fieldsChanged.w2Withheld = true; break;
+        case "SET_W2_INCOME": setW2Income(action.value); fieldsChanged.w2Income = true; break;
+        case "SET_SPOUSE_INCOME": setSpouseIncome(action.value); fieldsChanged.spouseIncome = true; break;
+        case "SET_W2_WITHHELD": setW2Withheld(action.value); fieldsChanged.w2Withheld = true; break;
         case "SET_SPOUSE_WITHHELD": setSpouseWithheld(action.value); fieldsChanged.spouseWithheld = true; break;
-        case "SET_BIZ_INCOME":      setBizIncome(action.value);      fieldsChanged.bizIncome = true; break;
-        case "SET_HOME_OFFICE":     setHomeOfficeDed(action.value);  fieldsChanged.homeOfficeDed = true; break;
+        case "SET_BIZ_INCOME": setBizIncome(action.value); fieldsChanged.bizIncome = true; break;
+        case "SET_HOME_OFFICE": setHomeOfficeDed(action.value); fieldsChanged.homeOfficeDed = true; break;
         case "ADD_EXPENSE":
           setExpenses(prev => [...prev, { id: nextId++, status: action.expense.status || "Likely Deductible", ...action.expense }]);
           fieldsChanged.expenses = true;
@@ -665,6 +691,11 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   const handleSpouseW2 = useCallback((p) => {
     if (p.box1_wages != null) setSpouseIncome(p.box1_wages);
     if (p.box2_federalWithheld != null) setSpouseWithheld(p.box2_federalWithheld);
+  }, []);
+
+  const handleMyW2 = useCallback((p) => {
+    if (p.box1_wages != null) setW2Income(p.box1_wages);
+    if (p.box2_federalWithheld != null) setW2Withheld(p.box2_federalWithheld);
   }, []);
 
   const addExpense = useCallback((exp) => {
@@ -693,18 +724,18 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
     }, {});
     const equipDed = INITIAL_ASSETS.reduce((s, a) => s + a.cost, 0);
     const totalBizDed = Object.values(expDed).reduce((a, b) => a + b, 0) + homeOfficeToUse + extraBizDed;
-    const netSE    = Math.max(0, bizIncome - totalBizDed);
-    const seTax    = netSE * 0.9235 * 0.153;
-    const seDed    = seTax * 0.5;
+    const netSE = Math.max(0, bizIncome - totalBizDed);
+    const seTax = netSE * 0.9235 * 0.153;
+    const seDed = seTax * 0.5;
     const totalIncome = w2Income + spouseIncome + bizIncome;
-    const agi      = totalIncome - seDed - extraAGIDed;
-    const qbiDed   = (agi <= QBI_THRESHOLD_MFJ && netSE > 0) ? netSE * QBI_RATE : 0;
-    const stdDed   = STANDARD_DEDUCTION_MFJ;
-    const taxable  = Math.max(0, agi - stdDed - qbiDed);
-    const fedTax   = calcFederalTax(taxable);
+    const agi = totalIncome - seDed - extraAGIDed;
+    const qbiDed = (agi <= QBI_THRESHOLD_MFJ && netSE > 0) ? netSE * QBI_RATE : 0;
+    const stdDed = STANDARD_DEDUCTION_MFJ;
+    const taxable = Math.max(0, agi - stdDed - qbiDed);
+    const fedTax = calcFederalTax(taxable);
     const marginal = marginalRate(taxable);
     const withheld = w2Withheld + spouseWithheld;
-    const liability= fedTax + seTax;
+    const liability = fedTax + seTax;
     const position = withheld - liability;
 
     const opts = [
@@ -808,7 +839,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
       } else {
         alert("Failed to send: " + data.error);
       }
-    } catch(err) {
+    } catch (err) {
       alert("Error sending email: " + err.message);
     } finally {
       setSendingEmail(false);
@@ -846,7 +877,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
       const text = evt.target.result;
       const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
       if (lines.length < 2) return alert("CSV needs headers and at least one row.");
-      
+
       const headers = lines[0].toLowerCase().split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.trim().replace(/^"|"$/g, ''));
       const vendorIdx = headers.findIndex(h => h.includes("vendor"));
       const categoryIdx = headers.findIndex(h => h.includes("category"));
@@ -904,8 +935,8 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", flexShrink: 0 }}>
             {activeTab === "summary" && (
-              <button 
-                onClick={handleSendCPA} 
+              <button
+                onClick={handleSendCPA}
                 disabled={sendingEmail}
                 style={{ background: emailSuccess ? t.green : t.blue, border: "none", borderRadius: "20px", padding: "6px 14px", cursor: sendingEmail ? "wait" : "pointer", fontSize: "12px", color: emailSuccess ? "#022c22" : "#fff", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px", fontFamily: "inherit", transition: "background 0.2s" }}
               >
@@ -930,7 +961,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
           </div>
         </div>
         <div style={{ display: "flex", overflowX: "auto", scrollbarWidth: "none" }}>
-          {["summary","expenses","income","optimizations","playbook"].map(tab => (
+          {["summary", "expenses", "income", "optimizations", "playbook"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{ background: "none", border: "none", borderBottom: activeTab === tab ? `2px solid ${t.blue}` : "2px solid transparent", color: activeTab === tab ? t.blue : t.textDim, padding: "9px 16px", fontSize: "13px", fontWeight: "500", cursor: "pointer", textTransform: "capitalize", transition: "all 0.15s", fontFamily: "inherit", whiteSpace: "nowrap" }}>{tab}</button>
           ))}
         </div>
@@ -943,10 +974,10 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
           <div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "10px", marginBottom: "22px" }}>
               {[
-                { label: "Total Income",    value: fmtK(calc.totalIncome), sub: "W-2 + spouse + biz",    color: t.blue,   fl: flashFields.w2Income || flashFields.spouseIncome || flashFields.bizIncome },
-                { label: "AGI",             value: fmtK(calc.agi),         sub: "after SE deduction",    color: t.purple, fl: false },
-                { label: "Total Deductions",value: fmtK(calc.totalBizDed + calc.stdDed), sub: "biz + standard", color: t.green, fl: flashFields.expenses || flashFields.homeOfficeDed },
-                { label: "Taxable Income",  value: fmtK(calc.taxable),     sub: `${pct(calc.marginal)} marginal`, color: t.orange, fl: false },
+                { label: "Total Income", value: fmtK(calc.totalIncome), sub: "W-2 + spouse + biz", color: t.blue, fl: flashFields.w2Income || flashFields.spouseIncome || flashFields.bizIncome },
+                { label: "AGI", value: fmtK(calc.agi), sub: "after SE deduction", color: t.purple, fl: false },
+                { label: "Total Deductions", value: fmtK(calc.totalBizDed + calc.stdDed), sub: "biz + standard", color: t.green, fl: flashFields.expenses || flashFields.homeOfficeDed },
+                { label: "Taxable Income", value: fmtK(calc.taxable), sub: `${pct(calc.marginal)} marginal`, color: t.orange, fl: false },
               ].map(m => (
                 <div key={m.label} style={{
                   background: m.fl ? (isDark ? "#0f2a1e" : "#f0fdf4") : t.surface,
@@ -964,23 +995,23 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
             <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", padding: "20px 24px", marginBottom: "18px" }}>
               <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, marginBottom: "14px", letterSpacing: "0.5px" }}>TAX WATERFALL</div>
               {[
-                { label: "Gross business income",      value: fmt(bizIncome),            color: t.blue },
-                { label: "Business deductions",        value: "− " + fmt(calc.totalBizDed), color: t.red, indent: 1 },
-                { label: "Net SE income / (loss)",     value: fmt(calc.netSE),           color: t.text, bold: true, divider: true },
-                { label: "Self-employment tax (15.3%)",value: fmt(calc.seTax),           color: t.red, indent: 1 },
-                { label: "½ SE tax deduction",         value: "− " + fmt(calc.seDed),    color: t.redMid, indent: 2, small: true },
-                { label: "Your W-2 income",            value: fmt(w2Income),             color: t.blue },
-                { label: "Spouse W-2 income",          value: fmt(spouseIncome),         color: t.blue },
-                { label: "Adjusted Gross Income",      value: fmt(calc.agi),             color: t.text, bold: true, divider: true },
-                { label: "Standard deduction (MFJ)",   value: "− " + fmt(calc.stdDed),  color: t.red, indent: 1 },
-                { label: "QBI deduction",              value: calc.qbiDed > 0 ? "− " + fmt(calc.qbiDed) : "—", color: t.red, indent: 1, small: true },
-                { label: "Taxable Income",             value: fmt(calc.taxable),         color: t.text, bold: true, divider: true },
-                { label: "Federal income tax",         value: fmt(calc.fedTax),          color: t.red, indent: 1 },
-                { label: "Self-employment tax",        value: fmt(calc.seTax),           color: t.red, indent: 1 },
-                { label: "Total Tax Liability",        value: fmt(calc.liability),       color: t.red, bold: true, divider: true },
-                { label: "Your withholding",           value: fmt(w2Withheld),           color: t.green, indent: 1 },
-                { label: "Spouse withholding",         value: fmt(spouseWithheld),       color: t.green, indent: 1 },
-                { label: "Total Withheld",             value: fmt(calc.withheld),        color: t.green, bold: true },
+                { label: "Gross business income", value: fmt(bizIncome), color: t.blue },
+                { label: "Business deductions", value: "− " + fmt(calc.totalBizDed), color: t.red, indent: 1 },
+                { label: "Net SE income / (loss)", value: fmt(calc.netSE), color: t.text, bold: true, divider: true },
+                { label: "Self-employment tax (15.3%)", value: fmt(calc.seTax), color: t.red, indent: 1 },
+                { label: "½ SE tax deduction", value: "− " + fmt(calc.seDed), color: t.redMid, indent: 2, small: true },
+                { label: "Your W-2 income", value: fmt(w2Income), color: t.blue },
+                { label: "Spouse W-2 income", value: fmt(spouseIncome), color: t.blue },
+                { label: "Adjusted Gross Income", value: fmt(calc.agi), color: t.text, bold: true, divider: true },
+                { label: "Standard deduction (MFJ)", value: "− " + fmt(calc.stdDed), color: t.red, indent: 1 },
+                { label: "QBI deduction", value: calc.qbiDed > 0 ? "− " + fmt(calc.qbiDed) : "—", color: t.red, indent: 1, small: true },
+                { label: "Taxable Income", value: fmt(calc.taxable), color: t.text, bold: true, divider: true },
+                { label: "Federal income tax", value: fmt(calc.fedTax), color: t.red, indent: 1 },
+                { label: "Self-employment tax", value: fmt(calc.seTax), color: t.red, indent: 1 },
+                { label: "Total Tax Liability", value: fmt(calc.liability), color: t.red, bold: true, divider: true },
+                { label: "Your withholding", value: fmt(w2Withheld), color: t.green, indent: 1 },
+                { label: "Spouse withholding", value: fmt(spouseWithheld), color: t.green, indent: 1 },
+                { label: "Total Withheld", value: fmt(calc.withheld), color: t.green, bold: true },
               ].map((row, i) => (
                 <div key={i}>
                   {row.divider && <div style={{ borderTop: `1px solid ${t.border}`, margin: "5px 0" }} />}
@@ -1022,140 +1053,141 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
           if (homeOfficeDed === 0 && !expenses.some(e => e.category === "Housing & Real Estate")) missing.push({ title: "Home Office", desc: "Most consultants qualify for a home office deduction. Are you missing out?" });
 
           return (
-          <div>
-            {missing.length > 0 && (
-              <div style={{ background: isDark ? "#0f2744" : "#eff6ff", border: `1px solid ${t.blue}44`, borderLeft: `4px solid ${t.blue}`, borderRadius: "10px", padding: "14px 18px", marginBottom: "16px" }}>
-                <div style={{ fontSize: "11px", fontWeight: "600", color: t.blue, marginBottom: "10px", letterSpacing: "0.5px" }}>💡 PROACTIVE ALERTS: MISSING DEDUCTIONS</div>
-                {missing.map((m, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: i < missing.length - 1 ? "12px" : "0" }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: "13px", fontWeight: "600", color: t.text }}>Missing: {m.title}?</div>
-                      <div style={{ fontSize: "12px", color: t.textDim, marginTop: "2px" }}>{m.desc}</div>
+            <div>
+              {missing.length > 0 && (
+                <div style={{ background: isDark ? "#0f2744" : "#eff6ff", border: `1px solid ${t.blue}44`, borderLeft: `4px solid ${t.blue}`, borderRadius: "10px", padding: "14px 18px", marginBottom: "16px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: t.blue, marginBottom: "10px", letterSpacing: "0.5px" }}>💡 PROACTIVE ALERTS: MISSING DEDUCTIONS</div>
+                  {missing.map((m, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: i < missing.length - 1 ? "12px" : "0" }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: "13px", fontWeight: "600", color: t.text }}>Missing: {m.title}?</div>
+                        <div style={{ fontSize: "12px", color: t.textDim, marginTop: "2px" }}>{m.desc}</div>
+                      </div>
+                      <div style={{ fontSize: "11px", color: t.textFaint, fontStyle: "italic" }}>Ask Wrytoff AI</div>
                     </div>
-                    <div style={{ fontSize: "11px", color: t.textFaint, fontStyle: "italic" }}>Ask Wrytoff AI</div>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
+                <div style={{ fontSize: "13px", color: t.textDim }}>
+                  At your {pct(calc.marginal)} bracket, every $1K deducted saves ~{fmt(calc.marginal * 1000)}.
+                </div>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <input type="file" accept=".csv" ref={fileInputRef} style={{ display: "none" }} onChange={handleImportCSV} />
+                  <button onClick={() => fileInputRef.current?.click()} style={{ background: t.surface, border: `1px solid ${t.border2}`, borderRadius: "8px", color: t.text, padding: "8px 14px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit" }}>
+                    Import CSV
+                  </button>
+                  <button onClick={exportCSV} style={{ background: t.surface, border: `1px solid ${t.border2}`, borderRadius: "8px", color: t.text, padding: "8px 14px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit" }}>
+                    Export CSV
+                  </button>
+                  <button onClick={() => setShowAddModal(true)} style={{ background: t.green, border: "none", borderRadius: "8px", color: "#022c22", padding: "8px 18px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "16px" }}>+</span> Add expense
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", overflow: "hidden" }}>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", minWidth: "600px", borderCollapse: "collapse", fontSize: "13px" }}>
+                    <thead>
+                      <tr style={{ background: t.surface2, borderBottom: `1px solid ${t.border}` }}>
+                        {["Vendor", "Category", "Amount", "Biz %", "Deductible", "Saves", "Confidence", ""].map(h => (
+                          <th key={h} style={{ padding: "10px 13px", textAlign: "left", fontSize: "10px", color: t.textFaint, fontWeight: "500", letterSpacing: "0.5px" }}>{h.toUpperCase()}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {expenses.map((e, i) => {
+                        const ded = calcDeductible(e);
+                        const c = t.catColors[e.category] || t.catColors["Office & Supplies"];
+                        const rule = e.irsRule;
+                        const expanded = expandedRow === e.id;
+                        return (
+                          <>
+                            <tr key={e.id} style={{ borderBottom: `1px solid ${t.border}`, background: i % 2 === 0 ? "transparent" : t.surface2 + "88" }}>
+                              <td style={{ padding: "8px 13px", color: t.text }}>{e.vendor}</td>
+                              <td style={{ padding: "8px 13px" }}>
+                                <span style={{ background: c.bg, color: c.text, border: `1px solid ${c.accent}33`, borderRadius: "4px", padding: "2px 7px", fontSize: "10px" }}>{e.category}</span>
+                              </td>
+                              <td style={{ padding: "8px 13px" }}>
+                                <input type="number" value={e.amount === 0 ? "" : e.amount} onChange={ev => updateExp(e.id, "amount", ev.target.value)} style={inp({ width: "74px" })} />
+                              </td>
+                              <td style={{ padding: "8px 13px" }}>
+                                {e.category === "Meals & Entertainment"
+                                  ? <span style={{ color: t.textFaint, fontFamily: "'DM Mono',monospace", fontSize: "12px" }}>50% IRS</span>
+                                  : <input type="number" min="0" max="1" step="0.05" value={e.bizPct === 0 ? "" : e.bizPct} onChange={ev => updateExp(e.id, "bizPct", ev.target.value)} style={inp({ width: "64px" })} />
+                                }
+                              </td>
+                              <td style={{ padding: "8px 13px", fontFamily: "'DM Mono',monospace", color: t.green, fontWeight: "500" }}>{fmt(ded)}</td>
+                              <td style={{ padding: "8px 13px", fontFamily: "'DM Mono',monospace", color: t.greenMid, fontSize: "12px" }}>~{fmt(ded * calc.marginal)}</td>
+                              <td style={{ padding: "8px 13px" }}>
+                                <span style={{
+                                  background: e.category === "Meals & Entertainment" ? (isDark ? "#422006" : "#fefce8") : e.status === "High Scrutiny" ? (isDark ? "#422006" : "#fefce8") : e.status === "Needs Facts" ? (isDark ? "#1e293b" : "#f1f5f9") : (isDark ? "#064e3b" : "#f0fdf4"),
+                                  color: e.category === "Meals & Entertainment" ? "#ca8a04" : e.status === "High Scrutiny" ? "#ca8a04" : e.status === "Needs Facts" ? "#64748b" : t.green,
+                                  fontSize: "10px", padding: "3px 6px", borderRadius: "12px", border: `1px solid ${e.category === "Meals & Entertainment" ? "#ca8a0455" : e.status === "High Scrutiny" ? "#ca8a0455" : e.status === "Needs Facts" ? "#64748b55" : t.green + "55"}`, whiteSpace: "nowrap"
+                                }}>
+                                  {e.category === "Meals & Entertainment" ? "50% Limit" : (e.status || "Likely Deductible")}
+                                </span>
+                              </td>
+                              <td style={{ padding: "8px 8px", whiteSpace: "nowrap" }}>
+                                {rule && (
+                                  <button onClick={() => setExpandedRow(expanded ? null : e.id)}
+                                    style={{ background: "none", border: `1px solid ${t.border}`, borderRadius: "5px", color: t.textDim, padding: "3px 8px", fontSize: "10px", cursor: "pointer", fontFamily: "inherit", marginRight: "4px" }}>
+                                    {expanded ? "▲" : "IRS"}
+                                  </button>
+                                )}
+                                {e.id >= 100 && (
+                                  <button onClick={() => removeExpense(e.id)}
+                                    style={{ background: "none", border: `1px solid ${t.red}44`, borderRadius: "5px", color: t.red, padding: "3px 8px", fontSize: "10px", cursor: "pointer", fontFamily: "inherit" }}>
+                                    ✕
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                            {expanded && rule && (
+                              <tr key={`${e.id}-irs`} style={{ background: t.irsTagBg }}>
+                                <td colSpan="7" style={{ padding: "10px 16px" }}>
+                                  <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", flexWrap: "wrap" }}>
+                                    <div><span style={{ fontSize: "10px", color: t.textDim }}>IRS CODE</span><div style={{ fontSize: "12px", fontFamily: "'DM Mono',monospace", color: t.irsTagText, marginTop: "2px" }}>{rule.irsCode}</div></div>
+                                    <div style={{ flex: 1 }}><span style={{ fontSize: "10px", color: t.textDim }}>RULE</span><div style={{ fontSize: "12px", color: t.textMuted, marginTop: "2px", lineHeight: "1.4" }}>{rule.notes}</div></div>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{ background: t.tfoot, borderTop: `1px solid ${t.border2}` }}>
+                        <td colSpan="4" style={{ padding: "10px 13px", fontWeight: "600", color: t.textMuted, fontSize: "12px" }}>TOTAL EXPENSES</td>
+                        <td style={{ padding: "10px 13px", fontFamily: "'DM Mono',monospace", color: t.green, fontWeight: "600", fontSize: "14px" }}>
+                          {fmt(expenses.reduce((s, e) => s + calcDeductible(e), 0))}
+                        </td>
+                        <td style={{ padding: "10px 13px", fontFamily: "'DM Mono',monospace", color: t.greenMid, fontSize: "12px" }}>
+                          ~{fmt(expenses.reduce((s, e) => s + calcDeductible(e), 0) * calc.marginal)}
+                        </td>
+                        <td colSpan="2" />
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
+              <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", padding: "16px 20px", marginTop: "12px" }}>
+                <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, marginBottom: "10px", letterSpacing: "0.5px" }}>EQUIPMENT (SECTION 179 / EXPENSED)</div>
+                {INITIAL_ASSETS.map(a => (
+                  <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "7px" }}>
+                    <span style={{ color: t.text, flex: 1, fontSize: "13px" }}>{a.item}</span>
+                    <span style={{ background: t.irsTagBg, color: t.irsTagText, border: `1px solid ${t.irsTagBorder}`, borderRadius: "4px", padding: "2px 8px", fontSize: "10px" }}>{a.method}</span>
+                    <span style={{ fontFamily: "'DM Mono',monospace", color: t.green, fontSize: "13px" }}>{fmt(a.cost)}</span>
+                    <span style={{ fontFamily: "'DM Mono',monospace", color: t.greenMid, fontSize: "12px" }}>~{fmt(a.cost * calc.marginal)}</span>
                   </div>
                 ))}
               </div>
-            )}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
-              <div style={{ fontSize: "13px", color: t.textDim }}>
-                At your {pct(calc.marginal)} bracket, every $1K deducted saves ~{fmt(calc.marginal * 1000)}.
-              </div>
-              <div style={{ display: "flex", gap: "10px" }}>
-                <input type="file" accept=".csv" ref={fileInputRef} style={{ display: "none" }} onChange={handleImportCSV} />
-                <button onClick={() => fileInputRef.current?.click()} style={{ background: t.surface, border: `1px solid ${t.border2}`, borderRadius: "8px", color: t.text, padding: "8px 14px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit" }}>
-                  Import CSV
-                </button>
-                <button onClick={exportCSV} style={{ background: t.surface, border: `1px solid ${t.border2}`, borderRadius: "8px", color: t.text, padding: "8px 14px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit" }}>
-                  Export CSV
-                </button>
-                <button onClick={() => setShowAddModal(true)} style={{ background: t.green, border: "none", borderRadius: "8px", color: "#022c22", padding: "8px 18px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "16px" }}>+</span> Add expense
-                </button>
-              </div>
             </div>
-
-            <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", overflow: "hidden" }}>
-              <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", minWidth: "600px", borderCollapse: "collapse", fontSize: "13px" }}>
-                <thead>
-                  <tr style={{ background: t.surface2, borderBottom: `1px solid ${t.border}` }}>
-                    {["Vendor","Category","Amount","Biz %","Deductible","Saves","Confidence",""].map(h => (
-                      <th key={h} style={{ padding: "10px 13px", textAlign: "left", fontSize: "10px", color: t.textFaint, fontWeight: "500", letterSpacing: "0.5px" }}>{h.toUpperCase()}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {expenses.map((e, i) => {
-                    const ded = calcDeductible(e);
-                    const c = t.catColors[e.category] || t.catColors["Office & Supplies"];
-                    const rule = e.irsRule;
-                    const expanded = expandedRow === e.id;
-                    return (
-                      <>
-                        <tr key={e.id} style={{ borderBottom: `1px solid ${t.border}`, background: i % 2 === 0 ? "transparent" : t.surface2 + "88" }}>
-                          <td style={{ padding: "8px 13px", color: t.text }}>{e.vendor}</td>
-                          <td style={{ padding: "8px 13px" }}>
-                            <span style={{ background: c.bg, color: c.text, border: `1px solid ${c.accent}33`, borderRadius: "4px", padding: "2px 7px", fontSize: "10px" }}>{e.category}</span>
-                          </td>
-                          <td style={{ padding: "8px 13px" }}>
-                            <input type="number" value={e.amount} onChange={ev => updateExp(e.id, "amount", ev.target.value)} style={inp({ width: "74px" })} />
-                          </td>
-                          <td style={{ padding: "8px 13px" }}>
-                            {e.category === "Meals & Entertainment"
-                              ? <span style={{ color: t.textFaint, fontFamily: "'DM Mono',monospace", fontSize: "12px" }}>50% IRS</span>
-                              : <input type="number" min="0" max="1" step="0.05" value={e.bizPct} onChange={ev => updateExp(e.id, "bizPct", ev.target.value)} style={inp({ width: "64px" })} />
-                            }
-                          </td>
-                          <td style={{ padding: "8px 13px", fontFamily: "'DM Mono',monospace", color: t.green, fontWeight: "500" }}>{fmt(ded)}</td>
-                          <td style={{ padding: "8px 13px", fontFamily: "'DM Mono',monospace", color: t.greenMid, fontSize: "12px" }}>~{fmt(ded * calc.marginal)}</td>
-                          <td style={{ padding: "8px 13px" }}>
-                            <span style={{ 
-                                background: e.category === "Meals & Entertainment" ? (isDark ? "#422006" : "#fefce8") : e.status === "High Scrutiny" ? (isDark ? "#422006" : "#fefce8") : e.status === "Needs Facts" ? (isDark ? "#1e293b" : "#f1f5f9") : (isDark ? "#064e3b" : "#f0fdf4"),
-                                color: e.category === "Meals & Entertainment" ? "#ca8a04" : e.status === "High Scrutiny" ? "#ca8a04" : e.status === "Needs Facts" ? "#64748b" : t.green,
-                                fontSize: "10px", padding: "3px 6px", borderRadius: "12px", border: `1px solid ${e.category === "Meals & Entertainment" ? "#ca8a0455" : e.status === "High Scrutiny" ? "#ca8a0455" : e.status === "Needs Facts" ? "#64748b55" : t.green+"55"}`, whiteSpace: "nowrap"
-                             }}>
-                              {e.category === "Meals & Entertainment" ? "50% Limit" : (e.status || "Likely Deductible")}
-                            </span>
-                          </td>
-                          <td style={{ padding: "8px 8px", whiteSpace: "nowrap" }}>
-                            {rule && (
-                              <button onClick={() => setExpandedRow(expanded ? null : e.id)}
-                                style={{ background: "none", border: `1px solid ${t.border}`, borderRadius: "5px", color: t.textDim, padding: "3px 8px", fontSize: "10px", cursor: "pointer", fontFamily: "inherit", marginRight: "4px" }}>
-                                {expanded ? "▲" : "IRS"}
-                              </button>
-                            )}
-                            {e.id >= 100 && (
-                              <button onClick={() => removeExpense(e.id)}
-                                style={{ background: "none", border: `1px solid ${t.red}44`, borderRadius: "5px", color: t.red, padding: "3px 8px", fontSize: "10px", cursor: "pointer", fontFamily: "inherit" }}>
-                                ✕
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                        {expanded && rule && (
-                          <tr key={`${e.id}-irs`} style={{ background: t.irsTagBg }}>
-                            <td colSpan="7" style={{ padding: "10px 16px" }}>
-                              <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", flexWrap: "wrap" }}>
-                                <div><span style={{ fontSize: "10px", color: t.textDim }}>IRS CODE</span><div style={{ fontSize: "12px", fontFamily: "'DM Mono',monospace", color: t.irsTagText, marginTop: "2px" }}>{rule.irsCode}</div></div>
-                                <div style={{ flex: 1 }}><span style={{ fontSize: "10px", color: t.textDim }}>RULE</span><div style={{ fontSize: "12px", color: t.textMuted, marginTop: "2px", lineHeight: "1.4" }}>{rule.notes}</div></div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr style={{ background: t.tfoot, borderTop: `1px solid ${t.border2}` }}>
-                    <td colSpan="4" style={{ padding: "10px 13px", fontWeight: "600", color: t.textMuted, fontSize: "12px" }}>TOTAL EXPENSES</td>
-                    <td style={{ padding: "10px 13px", fontFamily: "'DM Mono',monospace", color: t.green, fontWeight: "600", fontSize: "14px" }}>
-                      {fmt(expenses.reduce((s, e) => s + calcDeductible(e), 0))}
-                    </td>
-                    <td style={{ padding: "10px 13px", fontFamily: "'DM Mono',monospace", color: t.greenMid, fontSize: "12px" }}>
-                      ~{fmt(expenses.reduce((s, e) => s + calcDeductible(e), 0) * calc.marginal)}
-                    </td>
-                    <td colSpan="2" />
-                  </tr>
-                </tfoot>
-              </table>
-              </div>
-            </div>
-
-            <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", padding: "16px 20px", marginTop: "12px" }}>
-              <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, marginBottom: "10px", letterSpacing: "0.5px" }}>EQUIPMENT (SECTION 179 / EXPENSED)</div>
-              {INITIAL_ASSETS.map(a => (
-                <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "7px" }}>
-                  <span style={{ color: t.text, flex: 1, fontSize: "13px" }}>{a.item}</span>
-                  <span style={{ background: t.irsTagBg, color: t.irsTagText, border: `1px solid ${t.irsTagBorder}`, borderRadius: "4px", padding: "2px 8px", fontSize: "10px" }}>{a.method}</span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", color: t.green, fontSize: "13px" }}>{fmt(a.cost)}</span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", color: t.greenMid, fontSize: "12px" }}>~{fmt(a.cost * calc.marginal)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ); })()}
+          );
+        })()}
 
         {/* ── INCOME ── */}
         {activeTab === "income" && (
@@ -1166,28 +1198,31 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               {[{ label: "Wages (Box 1)", value: w2Income, set: setW2Income, desc: "Gross wages from your employer" }, { label: "Federal withheld (Box 2)", value: w2Withheld, set: setW2Withheld, desc: "From Box 2 of your W-2" }].map(f => (
                 <div key={f.label} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "10px", padding: "14px 16px" }}>
                   <div style={{ fontSize: "10px", color: t.textDim, marginBottom: "6px", letterSpacing: "0.5px" }}>{f.label.toUpperCase()}</div>
-                  <input type="number" value={f.value} onChange={e => f.set(parseFloat(e.target.value) || 0)} style={bigInp()} />
+                  <input type="number" value={f.value === 0 ? "" : f.value} onChange={e => f.set(parseFloat(e.target.value) || 0)} style={bigInp()} />
                   <div style={{ fontSize: "11px", color: t.textFaint, marginTop: "6px" }}>{f.desc}</div>
                 </div>
               ))}
             </div>
+            <W2Uploader onParsed={handleMyW2} t={t} />
             <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, marginBottom: "10px", letterSpacing: "0.5px" }}>SPOUSE W-2</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: "12px" }}>
+            <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, marginBottom: "10px", letterSpacing: "0.5px", marginTop: "24px" }}>SPOUSE W-2</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: "12px", marginBottom: "20px" }}>
               {[{ label: "Spouse wages (Box 1)", value: spouseIncome, set: setSpouseIncome, desc: "Auto-filled from W-2 upload below" }, { label: "Spouse withheld (Box 2)", value: spouseWithheld, set: setSpouseWithheld, desc: "Auto-filled from W-2 upload below" }].map(f => (
                 <div key={f.label} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "10px", padding: "14px 16px" }}>
                   <div style={{ fontSize: "10px", color: t.textDim, marginBottom: "6px", letterSpacing: "0.5px" }}>{f.label.toUpperCase()}</div>
-                  <input type="number" value={f.value} onChange={e => f.set(parseFloat(e.target.value) || 0)} style={bigInp()} />
+                  <input type="number" value={f.value === 0 ? "" : f.value} onChange={e => f.set(parseFloat(e.target.value) || 0)} style={bigInp()} />
                   <div style={{ fontSize: "11px", color: t.textFaint, marginTop: "6px" }}>{f.desc}</div>
                 </div>
               ))}
             </div>
             <W2Uploader onParsed={handleSpouseW2} t={t} />
             <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, margin: "20px 0 10px", letterSpacing: "0.5px" }}>{companyName.toUpperCase()} REVENUE</div>
+            <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, margin: "24px 0 10px", letterSpacing: "0.5px" }}>{companyName.toUpperCase()} REVENUE</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: "12px" }}>
               {[{ label: `${companyName} gross revenue`, value: bizIncome, set: setBizIncome, desc: "Total gross receipts/sales" }, { label: "Home office deduction", value: homeOfficeDed, set: setHomeOfficeDed, desc: "Mortgage/rent portion for home office" }].map(f => (
                 <div key={f.label} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "10px", padding: "14px 16px" }}>
                   <div style={{ fontSize: "10px", color: t.textDim, marginBottom: "6px", letterSpacing: "0.5px" }}>{f.label.toUpperCase()}</div>
-                  <input type="number" value={f.value} onChange={e => f.set(parseFloat(e.target.value) || 0)} style={bigInp()} />
+                  <input type="number" value={f.value === 0 ? "" : f.value} onChange={e => f.set(parseFloat(e.target.value) || 0)} style={bigInp()} />
                   <div style={{ fontSize: "11px", color: t.textFaint, marginTop: "6px" }}>{f.desc}</div>
                 </div>
               ))}
@@ -1215,7 +1250,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
             </div>
 
             <div style={{ fontSize: "13px", color: t.textDim, marginBottom: "16px" }}>Move the sliders to model exactly how different actions impact your tax bill before year end.</div>
-            
+
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "10px", padding: "16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
@@ -1226,7 +1261,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                   Contribute up to 25% of net profit (max {fmt(calc.opts[0].max)}). Reduces AGI dollar-for-dollar.
                   {calc.opts[0].max === 0 && <span style={{ color: t.redMid, marginLeft: "4px" }}>(Requires net business profit to contribute)</span>}
                 </div>
-                <input type="range" min="0" max={Math.max(1000, Math.round(calc.opts[0].max))} step="1000" disabled={calc.opts[0].max === 0} value={scenario.sepIra} onChange={e => setScenario({...scenario, sepIra: parseInt(e.target.value) || 0})} style={{ width: "100%", cursor: calc.opts[0].max === 0 ? "not-allowed" : "pointer", opacity: calc.opts[0].max === 0 ? 0.5 : 1 }} />
+                <input type="range" min="0" max={Math.max(1000, Math.round(calc.opts[0].max))} step="1000" disabled={calc.opts[0].max === 0} value={scenario.sepIra} onChange={e => setScenario({ ...scenario, sepIra: parseInt(e.target.value) || 0 })} style={{ width: "100%", cursor: calc.opts[0].max === 0 ? "not-allowed" : "pointer", opacity: calc.opts[0].max === 0 ? 0.5 : 1 }} />
               </div>
 
               <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "10px", padding: "16px" }}>
@@ -1235,7 +1270,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                   <div style={{ fontSize: "14px", fontFamily: "'DM Mono',monospace", color: t.blue, fontWeight: "600" }}>{fmt(scenario.healthIns)}</div>
                 </div>
                 <div style={{ fontSize: "11px", color: t.textMuted, marginBottom: "10px" }}>100% deductible if you pay premiums for medical/dental out of pocket.</div>
-                <input type="range" min="0" max="25000" step="500" value={scenario.healthIns} onChange={e => setScenario({...scenario, healthIns: parseInt(e.target.value) || 0})} style={{ width: "100%", cursor: "pointer" }} />
+                <input type="range" min="0" max="25000" step="500" value={scenario.healthIns} onChange={e => setScenario({ ...scenario, healthIns: parseInt(e.target.value) || 0 })} style={{ width: "100%", cursor: "pointer" }} />
               </div>
 
               <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "10px", padding: "16px" }}>
@@ -1244,7 +1279,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                   <div style={{ fontSize: "14px", fontFamily: "'DM Mono',monospace", color: t.blue, fontWeight: "600" }}>{scenario.mileage} miles</div>
                 </div>
                 <div style={{ fontSize: "11px", color: t.textMuted, marginBottom: "10px" }}>Deduct $0.70 per business mile driven.</div>
-                <input type="range" min="0" max="15000" step="100" value={scenario.mileage} onChange={e => setScenario({...scenario, mileage: parseInt(e.target.value) || 0})} style={{ width: "100%", cursor: "pointer" }} />
+                <input type="range" min="0" max="15000" step="100" value={scenario.mileage} onChange={e => setScenario({ ...scenario, mileage: parseInt(e.target.value) || 0 })} style={{ width: "100%", cursor: "pointer" }} />
               </div>
             </div>
 
@@ -1275,15 +1310,15 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
 // TAXBOT — agentic floating pill chatbot
 // ─────────────────────────────────────────────
 function TaxBot({ t, isDark, calc, expenses, w2Income, spouseIncome, bizIncome, homeOfficeDed, w2Withheld, spouseWithheld, dispatch, setActiveTab, companyName }) {
-  const [open, setOpen]         = useState(false);
+  const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: "assistant", content: `Hi! I'm Wrytoff AI. I can answer questions AND update your tax data directly — just tell me things like your home square footage, mortgage interest paid, or any new expenses and I'll calculate and apply them for you.` }
   ]);
-  const [input, setInput]   = useState("");
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [applied, setApplied] = useState(null); // { summary: string }
   const bottomRef = useRef();
-  const inputRef  = useRef();
+  const inputRef = useRef();
 
   useEffect(() => {
     if (open) {
@@ -1406,6 +1441,23 @@ RULES:
   const cleanReply = (reply) => reply.replace(/```actions[\s\S]*?```/g, "").trim();
 
   const callAI = async (msgs) => {
+    const key = import.meta.env.VITE_OPENROUTER_API_KEY;
+    if (key) {
+      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+        body: JSON.stringify({
+          model: "anthropic/claude-3.5-sonnet",
+          messages: [
+            { role: "system", content: buildSystemPrompt() },
+            ...msgs.map(m => ({ role: m.role, content: m.content }))
+          ]
+        })
+      });
+      const data = await resp.json();
+      return data.choices?.[0]?.message?.content || "Sorry, I couldn't get a response.";
+    }
+
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1416,8 +1468,8 @@ RULES:
       }),
     });
     const data = await response.json();
-    return typeof data.content === "string" 
-      ? data.content 
+    return typeof data.content === "string"
+      ? data.content
       : (Array.isArray(data.content) ? data.content.find(b => b.type === "text")?.text : "Sorry, I couldn't get a response.");
   };
 
@@ -1469,12 +1521,12 @@ RULES:
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   };
 
-  const pillBg     = isDark ? "rgba(17,24,39,0.96)" : "rgba(255,255,255,0.98)";
-  const chatBg     = isDark ? "#0f172a" : "#f8fafc";
+  const pillBg = isDark ? "rgba(17,24,39,0.96)" : "rgba(255,255,255,0.98)";
+  const chatBg = isDark ? "#0f172a" : "#f8fafc";
   const userBubble = isDark ? "#1d4ed8" : "#2563eb";
   const asstBubble = isDark ? "#1e293b" : "#f1f5f9";
-  const borderClr  = isDark ? "#334155" : "#e2e8f0";
-  const glowColor  = isDark ? "rgba(52,211,153,0.4)" : "rgba(37,99,235,0.22)";
+  const borderClr = isDark ? "#334155" : "#e2e8f0";
+  const glowColor = isDark ? "rgba(52,211,153,0.4)" : "rgba(37,99,235,0.22)";
   const pillAccent = isDark ? t.green : t.blue;
 
   const QUICK_PROMPTS = [
@@ -1577,7 +1629,7 @@ RULES:
               <span style={{ fontSize: "14px" }}>⚡</span>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: "13px", fontWeight: "600", color: t.text }}>Kaptrix Tax Assistant</div>
+              <div style={{ fontSize: "13px", fontWeight: "600", color: t.text }}>Wrytoff AI</div>
               <div style={{ fontSize: "10px", color: t.textDim }}>Can read &amp; update your tax data · 2026</div>
             </div>
             <button onClick={() => setMessages([messages[0]])} style={{ background: "none", border: "none", color: t.textFaint, fontSize: "11px", cursor: "pointer", padding: "2px 6px", borderRadius: "4px", fontFamily: "inherit" }}>
@@ -1604,7 +1656,7 @@ RULES:
             {loading && (
               <div style={{ display: "flex" }}>
                 <div style={{ background: asstBubble, borderRadius: "14px 14px 14px 3px", padding: "11px 14px", display: "flex", gap: "5px", alignItems: "center" }}>
-                  {[0,1,2].map(i => <div key={i} className="kb-dot" style={{ width: "5px", height: "5px", borderRadius: "50%", background: t.textDim }} />)}
+                  {[0, 1, 2].map(i => <div key={i} className="kb-dot" style={{ width: "5px", height: "5px", borderRadius: "50%", background: t.textDim }} />)}
                 </div>
               </div>
             )}
