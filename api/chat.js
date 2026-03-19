@@ -3,12 +3,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const key = process.env.VITE_OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY;
-  const defaultModel = process.env.VITE_OPENROUTER_MODEL || process.env.OPENROUTER_MODEL || 'openai/gpt-5.4-nano';
+  const key = process.env.OPENROUTER_API_KEY;
+  const defaultModel = process.env.OPENROUTER_MODEL || 'openai/gpt-5.4-nano';
 
   if (!key) {
     return res.status(500).json({
-      error: 'Server missing OPENROUTER_API_KEY (or VITE_ variant)',
+      error: 'Server missing OPENROUTER_API_KEY',
       debug: {
         hasOpenRouterKey: false,
         vercelEnv: process.env.VERCEL_ENV || 'unknown',

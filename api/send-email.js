@@ -3,11 +3,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const key = process.env.VITE_RESEND_API_KEY || process.env.RESEND_API_KEY;
+  const key = process.env.RESEND_API_KEY;
 
   if (!key) {
     return res.status(500).json({
-      error: 'Server missing RESEND_API_KEY (or VITE_ variant)',
+      error: 'Server missing RESEND_API_KEY',
       debug: {
         hasResendKey: false,
         vercelEnv: process.env.VERCEL_ENV || 'unknown',

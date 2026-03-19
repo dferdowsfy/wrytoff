@@ -13,7 +13,7 @@ app.post("/api/chat", async (req, res) => {
     const { system, messages, model } = req.body;
     
     if (!process.env.OPENROUTER_API_KEY) {
-      return res.status(401).json({ error: "Missing OPENROUTER_API_KEY in server environment" });
+      return res.status(500).json({ error: "Server missing OPENROUTER_API_KEY" });
     }
 
     const openRouterMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
@@ -48,7 +48,7 @@ app.post("/api/parse-w2", async (req, res) => {
     const { messages, model } = req.body;
 
     if (!process.env.OPENROUTER_API_KEY) {
-      return res.status(401).json({ error: "Missing OPENROUTER_API_KEY in server environment" });
+      return res.status(500).json({ error: "Server missing OPENROUTER_API_KEY" });
     }
 
     // Convert Anthropic multimodal payload to OpenAI standard
@@ -104,7 +104,7 @@ app.post("/api/send-email", async (req, res) => {
     const { html, to } = req.body;
     
     if (!process.env.RESEND_API_KEY) {
-      return res.status(401).json({ error: "Missing RESEND_API_KEY in server environment" });
+      return res.status(500).json({ error: "Server missing RESEND_API_KEY" });
     }
 
     const response = await fetch("https://api.resend.com/emails", {
