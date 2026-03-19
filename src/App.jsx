@@ -587,15 +587,17 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
         const base64Content = evt.target.result.split(',')[1];
         const mediaType = file.type;
 
-        // Call our Vercel Serverless Function / Express Proxy
-        const res = await fetch('/api/parse-w2', {
+        // Use relative path for production (Vercel), direct port for localhost to bypass proxy issues
+        const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/parse-w2' : '/api/parse-w2';
+        
+        const res = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             messages: [{
               role: 'user',
               content: [
-                { type: "text", text: "Extract W-2 data. Return ONLY a valid JSON object with: { wages, federalWithholding, employerName, stateName, stateWithholding, zipCode }. Numbers only for currency." },
+                { type: "text", text: "Parse this W-2. Response MUST be a JSON block: { \"wages\": number, \"federalWithholding\": number, \"employerName\": \"string\", \"stateName\": \"string\", \"stateWithholding\": number, \"zipCode\": \"string\" }" },
                 { type: "image", source: { type: "base64", media_type: mediaType, data: base64Content } }
               ]
             }]
@@ -605,13 +607,15 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
         const data = await res.json();
         if (data.content) {
           try {
-            const cleanJson = data.content.match(/\{.*\}/s)?.[0];
+            // Stronger regex to extract JSON blocks even if surrounded by text
+            const cleanJson = data.content.match(/\{[\s\S]*\}/)?.[0];
             const parsed = JSON.parse(cleanJson);
             if (parsed.wages) setW2Income(parsed.wages);
             if (parsed.federalWithholding) setW2Withheld(parsed.federalWithholding);
             if (parsed.employerName) setEmployerName(parsed.employerName);
             if (parsed.stateWithholding) setScenario(prev => ({ ...prev, stateWithheld: parsed.stateWithholding }));
-            alert("W-2 Successfully Processed!");
+            if (parsed.stateName) setScenario(prev => ({ ...prev, stateName: parsed.stateName }));
+            alert("W-2 Data Successfully Synced!");
           } catch (pe) {
             console.error("JSON Parse error:", pe, data.content);
             alert("Could not interpret AI response. Please enter manually.");
