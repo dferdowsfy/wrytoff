@@ -200,7 +200,7 @@ function LandingScrollytelling({ onLogin, onSignUp }) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
     handleResize();
     window.addEventListener('resize', handleResize);
     
@@ -285,8 +285,8 @@ function LandingScrollytelling({ onLogin, onSignUp }) {
         </div>
 
         {/* RIGHT COLUMN: STICKY PRODUCT INTERFACE */}
-        <div style={{ flex: 1.2, position: isMobile ? 'sticky' : 'relative', top: isMobile ? '60px' : '0', zIndex: 10, background: isMobile ? '#f8fafc' : 'transparent' }}>
-          <div style={{ position: 'sticky', top: isMobile ? '0' : '15vh', height: isMobile ? '35vh' : '70vh', display: 'flex', alignItems: 'center', padding: isMobile ? '20px 0' : '0' }}>
+        <div style={{ flex: 1.2, position: isMobile ? 'sticky' : 'relative', top: isMobile ? '60px' : '0', zIndex: 10, background: isMobile ? '#f8fafc' : 'transparent', minHeight: isMobile ? 'auto' : '100vh' }}>
+          <div style={{ position: 'sticky', top: isMobile ? '0' : '15vh', height: isMobile ? '35vh' : '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '20px 0' : '0' }}>
             <StickyDashboard step={step} isMobile={isMobile} />
           </div>
         </div>
@@ -303,7 +303,7 @@ function StickyDashboard({ step, isMobile }) {
   const wifiVal = step >= 2 ? '70%' : '10%';
   
   return (
-    <div style={{ width: '100%', perspective: '1200px', transform: isMobile ? 'scale(0.8)' : 'none' }}>
+    <div style={{ width: '100%', maxWidth: '640px', margin: '0 auto', perspective: '1200px', transform: isMobile ? 'scale(0.8)' : 'none', position: 'relative' }}>
       <div style={{ 
         background: '#fff', borderRadius: isMobile ? '24px' : '32px', border: '1px solid #e2e8f0', 
         boxShadow: '0 40px 100px -20px rgba(0,0,0,0.12)', 
@@ -312,6 +312,7 @@ function StickyDashboard({ step, isMobile }) {
         opacity: step === 0 && !isMobile ? 0.7 : 1,
         transition: 'all 0.8s'
       }}>
+        {/* Browser Top Bar */}
         <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '6px', background: '#f8fafc' }}>
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ff5f5733' }} />
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffbd2e33' }} />
@@ -319,6 +320,7 @@ function StickyDashboard({ step, isMobile }) {
         </div>
 
         <div style={{ padding: isMobile ? '24px' : '48px' }}>
+          {/* Dashboard Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isMobile ? '24px' : '40px' }}>
             <div>
               <div style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8', letterSpacing: '1px', marginBottom: '6px' }}>ESTIMATED POSITION</div>
@@ -332,6 +334,7 @@ function StickyDashboard({ step, isMobile }) {
             </div>
           </div>
 
+          {/* Table */}
           <div style={{ border: '1px solid #f1f5f9', borderRadius: '12px', overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: isMobile ? '12px' : '13px' }}>
               <thead>
@@ -357,32 +360,38 @@ function StickyDashboard({ step, isMobile }) {
 
       {/* OVERLAY: CHAT (Step 1) */}
       <div style={{ 
-        position: 'absolute', top: isMobile ? '-30px' : '40%', left: isMobile ? '-10px' : '-160px', width: isMobile ? '160px' : '300px', 
+        position: 'absolute', 
+        top: isMobile ? '-30px' : '10%', 
+        left: isMobile ? '-10px' : '-200px', 
+        width: isMobile ? '160px' : '320px', 
         background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', 
         padding: isMobile ? '10px' : '20px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
         opacity: step >= 1 ? 1 : 0, transform: step >= 1 ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)', zIndex: 50
+        transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)', zIndex: 50
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-          <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '10px' }}>⚡</div>
-          <span style={{ fontSize: '10px', fontWeight: '800' }}>Wrytoff AI</span>
+          <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '12px' }}>⚡</div>
+          <span style={{ fontSize: '11px', fontWeight: '800' }}>Wrytoff AI</span>
         </div>
-        <div style={{ fontSize: isMobile ? '11px' : '13px', background: '#f1f5f9', padding: '10px', borderRadius: '12px', lineHeight: '1.4' }}>
+        <div style={{ fontSize: isMobile ? '11px' : '14px', background: '#f1f5f9', padding: '12px', borderRadius: '14px', lineHeight: '1.4' }}>
           "Add my home office..."
         </div>
       </div>
 
       {/* OVERLAY: OPTIMIZATION (Step 4) */}
       <div style={{ 
-        position: 'absolute', bottom: isMobile ? '-40px' : '10px', right: isMobile ? '-10px' : '-130px', width: isMobile ? '160px' : '280px', 
-        background: '#0f172a', borderRadius: '16px', color: '#fff',
+        position: 'absolute', 
+        bottom: isMobile ? '-40px' : '-10%', 
+        right: isMobile ? '-10px' : '-180px', 
+        width: isMobile ? '160px' : '300px', 
+        background: '#0f172a', borderRadius: '20px', color: '#fff',
         padding: isMobile ? '14px' : '24px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
         opacity: step >= 4 ? 1 : 0, transform: step >= 4 ? 'scale(1)' : 'scale(0.9)',
-        transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)', zIndex: 51
+        transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)', zIndex: 51
       }}>
-        <div style={{ color: '#10b981', fontSize: '9px', fontWeight: '800', letterSpacing: '1px', marginBottom: '4px' }}>SAVINGS</div>
-        <div style={{ fontSize: isMobile ? '12px' : '15px', fontWeight: '600' }}>SEP-IRA</div>
-        <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: '800', color: '#10b981' }}>+$1,200</div>
+        <div style={{ color: '#10b981', fontSize: '10px', fontWeight: '800', letterSpacing: '1px', marginBottom: '4px' }}>SAVINGS DETECTED</div>
+        <div style={{ fontSize: isMobile ? '12px' : '16px', fontWeight: '600' }}>SEP-IRA Contribution</div>
+        <div style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '800', color: '#10b981' }}>+$1,200</div>
       </div>
     </div>
   );
