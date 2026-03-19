@@ -106,7 +106,7 @@ export default function AuthGuard() {
 
   const handleLogout = () => signOut(auth);
 
-  // 1) NOT LOGGED IN — SHOW LANDING OR FORM
+  // 1) NOT LOGGED IN — SHOW SCROLLYTELLING LANDING OR FORM
   if (!user) {
     if (!showAuthForm) {
       return <LandingScrollytelling onLogin={() => { setIsLogin(true); setShowAuthForm(true); }} onSignUp={() => { setIsLogin(false); setShowAuthForm(true); }} />;
@@ -312,7 +312,6 @@ function StickyDashboard({ step, isMobile }) {
         opacity: step === 0 && !isMobile ? 0.7 : 1,
         transition: 'all 0.8s'
       }}>
-        {/* Browser Top Bar */}
         <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '6px', background: '#f8fafc' }}>
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ff5f5733' }} />
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffbd2e33' }} />
@@ -320,7 +319,6 @@ function StickyDashboard({ step, isMobile }) {
         </div>
 
         <div style={{ padding: isMobile ? '24px' : '48px' }}>
-          {/* Dashboard Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isMobile ? '24px' : '40px' }}>
             <div>
               <div style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8', letterSpacing: '1px', marginBottom: '6px' }}>ESTIMATED POSITION</div>
@@ -334,7 +332,6 @@ function StickyDashboard({ step, isMobile }) {
             </div>
           </div>
 
-          {/* Table */}
           <div style={{ border: '1px solid #f1f5f9', borderRadius: '12px', overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: isMobile ? '12px' : '13px' }}>
               <thead>
@@ -360,11 +357,11 @@ function StickyDashboard({ step, isMobile }) {
 
       {/* OVERLAY: CHAT (Step 1) */}
       <div style={{ 
-        position: 'absolute', top: isMobile ? '20px' : '50%', left: isMobile ? '10px' : '-80px', width: isMobile ? '180px' : '300px', 
+        position: 'absolute', top: isMobile ? '-30px' : '40%', left: isMobile ? '-10px' : '-160px', width: isMobile ? '160px' : '300px', 
         background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', 
-        padding: isMobile ? '12px' : '20px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+        padding: isMobile ? '10px' : '20px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
         opacity: step >= 1 ? 1 : 0, transform: step >= 1 ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'all 0.4s', zIndex: 50
+        transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)', zIndex: 50
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
           <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '10px' }}>⚡</div>
@@ -377,11 +374,11 @@ function StickyDashboard({ step, isMobile }) {
 
       {/* OVERLAY: OPTIMIZATION (Step 4) */}
       <div style={{ 
-        position: 'absolute', bottom: isMobile ? '-20px' : '20px', right: isMobile ? '10px' : '-40px', width: isMobile ? '160px' : '280px', 
+        position: 'absolute', bottom: isMobile ? '-40px' : '10px', right: isMobile ? '-10px' : '-130px', width: isMobile ? '160px' : '280px', 
         background: '#0f172a', borderRadius: '16px', color: '#fff',
-        padding: isMobile ? '16px' : '24px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
+        padding: isMobile ? '14px' : '24px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
         opacity: step >= 4 ? 1 : 0, transform: step >= 4 ? 'scale(1)' : 'scale(0.9)',
-        transition: 'all 0.4s', zIndex: 51
+        transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)', zIndex: 51
       }}>
         <div style={{ color: '#10b981', fontSize: '9px', fontWeight: '800', letterSpacing: '1px', marginBottom: '4px' }}>SAVINGS</div>
         <div style={{ fontSize: isMobile ? '12px' : '15px', fontWeight: '600' }}>SEP-IRA</div>
