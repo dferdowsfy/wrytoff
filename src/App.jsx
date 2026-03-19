@@ -598,37 +598,60 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   const [isDark, setIsDark] = useState(false);
   const t = isDark ? DARK : LIGHT;
 
-  const td = userProfile?.taxData || {};
-  const [expenses, setExpenses] = useState(td.expenses || []);
-  const [assets, setAssets] = useState(td.assets || INITIAL_ASSETS);
-  const [w2Income, setW2Income] = useState(td.w2Income || 0);
-  const [spouseIncome, setSpouseIncome] = useState(td.spouseIncome || 0);
-  const [w2Withheld, setW2Withheld] = useState(td.w2Withheld || 0);
-  const [spouseWithheld, setSpouseWithheld] = useState(td.spouseWithheld || 0);
-  const [bizIncome, setBizIncome] = useState(td.bizIncome || 0);
-  const [homeOfficeDed, setHomeOfficeDed] = useState(td.homeOfficeDed || 0);
+  const [expenses, setExpenses] = useState([]);
+  const [assets, setAssets] = useState(INITIAL_ASSETS);
+  const [w2Income, setW2Income] = useState(0);
+  const [spouseIncome, setSpouseIncome] = useState(0);
+  const [w2Withheld, setW2Withheld] = useState(0);
+  const [spouseWithheld, setSpouseWithheld] = useState(0);
+  const [bizIncome, setBizIncome] = useState(0);
+  const [homeOfficeDed, setHomeOfficeDed] = useState(0);
+  const [scenario, setScenario] = useState({ posture: "Standard", sepIra: 0, healthIns: 0, mileage: 0 });
   const [activeTab, setActiveTab] = useState("summary");
   const [showAddModal, setShowAddModal] = useState(false);
   const [expandedRow, setExpandedRow] = useState(null);
   const [flashFields, setFlashFields] = useState({});
-  const [scenario, setScenario] = useState(td.scenario || { posture: "Standard", sepIra: 0, healthIns: 0, mileage: 0 });
+  const [dataLoaded, setDataLoaded] = useState(false);
 
-  // Native cloud serialization layer
+  // 1. Initial Data Sync from Prop
   useEffect(() => {
-    if (!userProfile?.uid) return;
+    if (userProfile?.taxData) {
+      console.log("Cloud Data Detected — Syncing to local state:", userProfile.taxData);
+      const td = userProfile.taxData;
+      if (td.expenses) setExpenses(td.expenses);
+      if (td.assets) setAssets(td.assets);
+      if (td.w2Income != null) setW2Income(td.w2Income);
+      if (td.spouseIncome != null) setSpouseIncome(td.spouseIncome);
+      if (td.w2Withheld != null) setW2Withheld(td.w2Withheld);
+      if (td.spouseWithheld != null) setSpouseWithheld(td.spouseWithheld);
+      if (td.bizIncome != null) setBizIncome(td.bizIncome);
+      if (td.homeOfficeDed != null) setHomeOfficeDed(td.homeOfficeDed);
+      if (td.scenario) setScenario(td.scenario);
+      setDataLoaded(true);
+    } else {
+      console.log("No Cloud taxData — Initializing defaults");
+      setDataLoaded(true);
+    }
+  }, [userProfile?.uid]);
+
+  // 2. Continuous Cloud Serialization
+  useEffect(() => {
+    if (!dataLoaded || !userProfile?.uid) return;
+    
     const saveToCloud = async () => {
       try {
+        console.log("Auto-saving to Firestore...");
         await setDoc(doc(db, 'users', userProfile.uid), {
           taxData: { expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario }
         }, { merge: true });
-        console.log("Cloud auto-save successful for " + userProfile.uid);
+        console.log("Cloud auto-save SUCCESSFUL for " + userProfile.uid);
       } catch (e) {
-        console.error("Cloud auto-save failure:", e);
+        console.error("Cloud auto-save FAILURE:", e);
       }
     };
     const syncTimer = setTimeout(saveToCloud, 1000); 
     return () => clearTimeout(syncTimer);
-  }, [expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario, userProfile?.uid]);
+  }, [expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario, userProfile?.uid, dataLoaded]);
 
   const flash = (fields) => {
     setFlashFields(fields);
