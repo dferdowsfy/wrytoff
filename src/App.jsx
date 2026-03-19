@@ -128,6 +128,87 @@ const IRS_LIBRARY = {
   ],
 };
 
+// ─────────────────────────────────────────────
+// TAX OPPORTUNITIES ENGINE CONFIG
+// ─────────────────────────────────────────────
+const OPPORTUNITIES = [
+  {
+    id: "sep-ira",
+    title: "SEP-IRA Contribution",
+    category: "Retirement",
+    whyMsg: "You have self-employment income and no retirement contribution currently modeled. This is one of the most powerful moves for high-earning solo-founders.",
+    dataUsed: ["Net SE Income", "Filing Status", "AGI"],
+    confidence: "High",
+    check: (ctx) => ctx.netSE > 15000 && ctx.scenario.sepIra === 0,
+    estimate: (ctx) => {
+      const maxAmt = Math.min(69000, ctx.netSE * 0.20);
+      return maxAmt * ctx.marginal;
+    },
+    missingFacts: [{ id: "plannedAmt", label: "Contribution amount", type: "currency", placeholder: "$0" }],
+    field: "sepIra",
+    priority: 1
+  },
+  {
+    id: "health-ins",
+    title: "Self-Employed Health Insurance",
+    category: "Insurance",
+    whyMsg: "Based on your business income, you can deduct 100% of your health insurance premiums directly. We don't see this deduction in your profile yet.",
+    dataUsed: ["Business Income", "Profile Context"],
+    confidence: "High",
+    check: (ctx) => {
+      const hasIns = ctx.expenses.some(e => e.category === "Insurance" && e.vendor.toLowerCase().includes("health"));
+      return ctx.bizIncome > 0 && !hasIns && ctx.scenario.healthIns === 0;
+    },
+    estimate: (ctx) => 8400 * ctx.marginal,
+    missingFacts: [{ id: "premiumAmt", label: "Estimated annual premium", type: "currency", placeholder: "$8,500" }],
+    field: "healthIns",
+    priority: 2
+  },
+  {
+    id: "home-office",
+    title: "Simplified Home Office Deduction",
+    category: "Home",
+    whyMsg: "You have business income but haven't applied the home office deduction. The simplified method ($5/sqft) is the fastest way to save.",
+    dataUsed: ["Business Income", "Expense History"],
+    confidence: "Med",
+    check: (ctx) => ctx.bizIncome > 0 && ctx.homeOfficeDed === 0,
+    estimate: (ctx) => 1500 * ctx.marginal,
+    missingFacts: [{ id: "sqFt", label: "Office square footage (max 300)", type: "number", placeholder: "e.g. 150" }],
+    field: "homeOfficeDed",
+    priority: 3
+  },
+  {
+    id: "mileage",
+    title: "Business Mileage Tracker",
+    category: "Vehicle",
+    whyMsg: "You're likely missing local travel deductions. At $0.70/mile, even weekly client meetings add up to significant savings.",
+    dataUsed: ["Expense Categories", "Business Activity"],
+    confidence: "Med",
+    check: (ctx) => ctx.bizIncome > 0 && ctx.scenario.mileage === 0,
+    estimate: (ctx) => 3000 * 0.70 * ctx.marginal,
+    missingFacts: [{ id: "estMiles", label: "Estimated annual business miles", type: "number", placeholder: "e.g. 2,000" }],
+    field: "mileage",
+    priority: 4
+  },
+  {
+    id: "equipment-179",
+    category: "Hardware",
+    title: "Section 179 Equipment Expensing",
+    whyMsg: "You have equipment purchases this year. Using Section 179 allows you to deduct the full cost now instead of over 5 years.",
+    dataUsed: ["Equipment & Hardware Category"],
+    confidence: "High",
+    check: (ctx) => {
+      const hasHardware = ctx.expenses.some(e => e.category === "Equipment & Hardware");
+      return hasHardware && !ctx.scenario.section179;
+    },
+    estimate: (ctx) => 5000 * ctx.marginal,
+    missingFacts: [],
+    field: "section179",
+    priority: 5,
+    advanced: true
+  }
+];
+
 const ALL_CATEGORY_NAMES = Object.keys(IRS_LIBRARY);
 
 const FREQUENCY_MULTIPLIERS = {
@@ -356,8 +437,11 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   const [bizIncome, setBizIncome] = useState(0);
   const [homeOfficeDed, setHomeOfficeDed] = useState(0);
   const [scenario, setScenario] = useState({ posture: "Standard", sepIra: 0, healthIns: 0, mileage: 0, filingStatus: "MFJ" });
-  const [activeTab, setActiveTab] = useState("expenses");
+  const [activeTab, setActiveTab] = useState("optimizations");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [dismissedOpps, setDismissedOpps] = useState([]);
+  const [activeScenarioId, setActiveScenarioId] = useState(null);
+  const [tempScenarioValue, setTempScenarioValue] = useState("");
   const [expandedRow, setExpandedRow] = useState(null);
   const [flashFields, setFlashFields] = useState({});
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -421,6 +505,10 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
           }]);
           break;
         case "NAVIGATE": setActiveTab(action.tab); break;
+        case "APPLY_OPTIMIZATION":
+          if (action.field === "homeOfficeDed") setHomeOfficeDed(action.value);
+          else setScenario(prev => ({ ...prev, [action.field]: action.value }));
+          break;
         default: break;
       }
     });
@@ -441,7 +529,8 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   const removeExpense = useCallback((id) => setExpenses(prev => prev.filter(e => e.id !== id)), []);
 
   const calc = useMemo(() => {
-    const totalBizDed = expenses.reduce((s, e) => s + calcDeductible(e), 0) + homeOfficeDed;
+    const scenarioDeds = (scenario.sepIra || 0) + (scenario.healthIns || 0) + ((scenario.mileage || 0) * 0.70) + (scenario.section179 || 0);
+    const totalBizDed = expenses.reduce((s, e) => s + calcDeductible(e), 0) + homeOfficeDed + scenarioDeds;
     const netSE = Math.max(0, bizIncome - totalBizDed);
     const seTax = netSE * 0.9235 * 0.153;
     const seDed = seTax * 0.5;
@@ -468,17 +557,10 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   const isRefund = calc.isRefund;
 
   const scenarioCalc = useMemo(() => {
-    const extraDed = scenario.sepIra + scenario.healthIns + (scenario.mileage * 0.70);
-    const updatedBizDed = calc.totalBizDed + extraDed;
-    const updatedNetSE = Math.max(0, bizIncome - updatedBizDed);
-    const updatedSeTax = updatedNetSE * 0.9235 * 0.153;
-    const updatedAgi = (w2Income + spouseIncome) + updatedNetSE - (updatedSeTax * 0.5);
-    const updatedTaxable = Math.max(0, updatedAgi - calc.stdDed - (updatedNetSE * QBI_RATE));
-    const updatedFedTax = calcFederalTax(updatedTaxable);
-    const updatedWithheld = w2Withheld + spouseWithheld;
-    const updatedLiability = updatedFedTax + updatedSeTax;
-    return { position: updatedWithheld - updatedLiability };
-  }, [calc, scenario, bizIncome, w2Income, spouseIncome, w2Withheld, spouseWithheld]);
+    // This is used for "what if I add X amount more to Y"
+    // For now, it's just a mirror of calc until we add a secondary preview layer
+    return calc;
+  }, [calc]);
 
   const handleExportCSV = () => {
     const headers = ["Vendor", "Category", "Amount", "Frequency", "Biz %", "Deductible"];
@@ -636,17 +718,17 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               <div style={{ fontSize: "12px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>FILING STATUS</div>
               <select value={scenario.filingStatus} onChange={e => setScenario({ ...scenario, filingStatus: e.target.value })} style={bigInp()}>
                 <option value="Single">Single</option>
-                <option value="MFJ">Married Filing Jointly</option>
+                <option value="MFJ">Married Filing Jointly (MFJ)</option>
               </select>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
               <div>
-                <div style={{ fontSize: "12px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>BIZ REVENUE</div>
+                <div style={{ fontSize: "12px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>BIZ REVENUE (ACCRUAL)</div>
                 <input type="number" value={bizIncome || ""} onChange={e => setBizIncome(parseFloat(e.target.value) || 0)} style={bigInp()} />
               </div>
               <div>
-                <div style={{ fontSize: "12px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>HOME OFFICE</div>
-                <input type="number" value={homeOfficeDed || ""} onChange={e => setHomeOfficeDed(parseFloat(e.target.value) || 0)} style={bigInp()} />
+                <div style={{ fontSize: "12px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>W-2 INCOME (GROSS)</div>
+                <input type="number" value={w2Income || ""} onChange={e => setW2Income(parseFloat(e.target.value) || 0)} style={bigInp()} />
               </div>
             </div>
           </div>
@@ -654,23 +736,241 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
 
         {activeTab === "playbook" && <DeductionPlaybook t={t} />}
         {activeTab === "optimizations" && (
-           <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", padding: "24px" }}>
-             <h3 style={{ marginTop: 0 }}>Strategic Optimizations</h3>
-             <div style={{ marginBottom: "20px" }}>
-               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                 <span>SEP-IRA Contribution</span>
-                 <span style={{ fontWeight: "700", color: t.blue }}>{fmt(scenario.sepIra)}</span>
-               </div>
-               <input type="range" min="0" max="69000" step="1000" value={scenario.sepIra} onChange={e => setScenario({ ...scenario, sepIra: parseInt(e.target.value) })} style={{ width: "100%" }} />
-             </div>
-             <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: "16px", marginTop: "16px" }}>
-               <div style={{ fontSize: "13px", color: t.textDim }}>Projected Savings: <span style={{ color: t.green, fontWeight: "700" }}>{fmt(calc.position - scenarioCalc.position)}</span></div>
-             </div>
-           </div>
+           <TaxOpportunitiesEngine 
+             t={t} 
+             ctx={{ ...calc, expenses, bizIncome, homeOfficeDed, scenario, dismissedOpps }} 
+             onApply={(opp, val) => {
+               if (opp.field === "homeOfficeDed") {
+                 setHomeOfficeDed(val);
+               } else {
+                 setScenario(prev => ({ ...prev, [opp.field]: val }));
+               }
+             }}
+             onDismiss={(id) => setDismissedOpps(prev => [...prev, id])}
+             activeScenarioId={activeScenarioId}
+             setActiveScenarioId={setActiveScenarioId}
+             tempScenarioValue={tempScenarioValue}
+             setTempScenarioValue={setTempScenarioValue}
+             fmt={fmt}
+           />
         )}
       </div>
 
       <TaxBot t={t} calc={calc} expenses={expenses} dispatch={dispatch} setActiveTab={setActiveTab} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// TAX OPPORTUNITIES ENGINE COMPONENTS
+// ─────────────────────────────────────────────
+function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, setActiveScenarioId, tempScenarioValue, setTempScenarioValue, fmt }) {
+  const ranking = useMemo(() => {
+    return OPPORTUNITIES.map(opp => {
+      const applies = opp.check(ctx);
+      const savings = opp.estimate ? opp.estimate(ctx) : 0;
+      return { ...opp, applies, estSavings: savings };
+    }).filter(opp => !ctx.dismissedOpps.includes(opp.id));
+  }, [ctx]);
+
+  const topOpps = ranking.filter(o => o.applies && !o.advanced).sort((a, b) => b.estSavings - a.estSavings);
+  const secondaryOppsArr = ranking.filter(o => !o.applies && !o.advanced);
+  const advancedOppsArr = ranking.filter(o => o.advanced);
+  
+  const totalPotential = topOpps.reduce((s, o) => s + o.estSavings, 0);
+
+  return (
+    <div style={{ animation: "fadeIn 0.4s ease-out" }}>
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .opp-card:hover { border-color: ${t.blue}66 !important; background: ${t.surface} !important; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.1); }
+      `}</style>
+
+      {/* 1. TOP SUMMARY STRIP */}
+      <div style={{ 
+        background: `linear-gradient(135deg, ${t.blue}aa 0%, ${t.surface2} 100%)`, 
+        border: `1px solid ${t.border}`, 
+        borderRadius: "16px", 
+        padding: "24px", 
+        marginBottom: "24px", 
+        display: "grid", 
+        gridTemplateColumns: "1fr 1.5fr 1fr", 
+        gap: "24px",
+        alignItems: "center",
+        backdropFilter: "blur(12px)",
+        boxShadow: `0 8px 32px -4px ${t.blue}22`
+      }}>
+        <div>
+          <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Potential Additional Savings</div>
+          <div style={{ fontSize: "36px", fontWeight: "800", color: t.text }}>{fmt(totalPotential)}</div>
+        </div>
+        <div style={{ borderLeft: `1px solid ${t.border}`, borderRight: `1px solid ${t.border}`, padding: "0 24px" }}>
+          <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Best Next Move</div>
+          {topOpps.length > 0 ? (
+            <div style={{ fontSize: "18px", fontWeight: "600", color: "#fff" }}>{topOpps[0].title}</div>
+          ) : (
+            <div style={{ fontSize: "18px", fontWeight: "600", color: t.green }}>Fully Optimized ✓</div>
+          )}
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Open Opportunities</div>
+          <div style={{ fontSize: "36px", fontWeight: "800", color: t.text }}>{topOpps.length}</div>
+        </div>
+      </div>
+
+      {/* 2. RANKED OPPORTUNITY CARDS */}
+      <div style={{ marginBottom: "40px" }}>
+        <h3 style={{ fontSize: "14px", fontWeight: "700", color: t.textDim, letterSpacing: "0.5px", marginBottom: "16px" }}>PRIORITY STRATEGIES</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}>
+          {topOpps.length > 0 ? topOpps.map(opp => (
+            <OpportunityCard 
+              key={opp.id} 
+              t={t} 
+              opp={opp} 
+              onApply={(val) => onApply(opp, val)} 
+              onDismiss={() => onDismiss(opp.id)}
+              isActiveScenario={activeScenarioId === opp.id}
+              setActiveScenarioId={setActiveScenarioId}
+              tempValue={tempScenarioValue}
+              setTempValue={setTempScenarioValue}
+              fmt={fmt}
+            />
+          )) : (
+            <div style={{ padding: "40px", textAlign: "center", background: t.surface, border: `1px dashed ${t.border}`, borderRadius: "12px", color: t.textDim }}>
+              No high-impact opportunities remaining based on current data.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 3. SECONDARY SECTIONS */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+        <div>
+          <h3 style={{ fontSize: "13px", fontWeight: "700", color: t.textDim, marginBottom: "12px" }}>COMMONLY MISSED</h3>
+          {secondaryOppsArr.length > 0 ? secondaryOppsArr.map(o => (
+            <div key={o.id} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "10px", padding: "14px", marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "13px", fontWeight: "600" }}>{o.title}</span>
+              <span style={{ fontSize: "12px", color: t.green, fontWeight: "700" }}>+{fmt(o.estSavings)}</span>
+            </div>
+          )) : <div style={{ fontSize: "12px", color: t.textFaint }}>All common items reviewed.</div>}
+        </div>
+        <div>
+          <h3 style={{ fontSize: "13px", fontWeight: "700", color: t.textDim, marginBottom: "12px" }}>ADVANCED STRATEGIES</h3>
+          {advancedOppsArr.map(o => (
+            <div key={o.id} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "10px", padding: "14px", marginBottom: "10px", opacity: o.applies ? 1 : 0.5 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                <span style={{ fontSize: "13px", fontWeight: "600" }}>{o.title}</span>
+                {o.applies && <span style={{ fontSize: "11px", fontWeight: "700", color: t.blue }}>Recommended</span>}
+              </div>
+              <div style={{ fontSize: "11px", color: t.textDim }}>{o.whyMsg}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OpportunityCard({ t, opp, onApply, onDismiss, isActiveScenario, setActiveScenarioId, tempValue, setTempValue, fmt }) {
+  const isApplied = false; // TBD: check if field in scenario matches max or is > 0
+
+  return (
+    <div className="opp-card" style={{ 
+      background: isActiveScenario ? `${t.blue}08` : t.surface, 
+      border: `1px solid ${isActiveScenario ? t.blue : t.border}`, 
+      borderRadius: "16px", 
+      padding: "24px", 
+      transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+      position: "relative",
+      overflow: "hidden"
+    }}>
+      {isActiveScenario && <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "4px", background: t.blue }} />}
+
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ fontSize: "18px", fontWeight: "700", color: t.text }}>{opp.title}</div>
+          <div style={{ background: opp.confidence === "High" ? `${t.green}22` : `${t.amber}22`, color: opp.confidence === "High" ? t.green : t.amber, padding: "2px 8px", borderRadius: "4px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.5px" }}>
+            {opp.confidence.toUpperCase()} CONFIDENCE
+          </div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: "10px", color: t.textDim, fontWeight: "700", letterSpacing: "0.5px" }}>EST. SAVINGS</div>
+          <div style={{ fontSize: "20px", fontWeight: "800", color: t.green, fontFamily: "'DM Mono',monospace" }}>~{fmt(opp.estSavings)}</div>
+        </div>
+      </div>
+
+      <div style={{ fontSize: "14px", color: t.textMuted, lineHeight: "1.5", marginBottom: "20px", maxWidth: "80%" }}>
+        {opp.whyMsg}
+      </div>
+
+      <div style={{ display: "flex", gap: "24px", marginBottom: "20px", padding: "12px", background: t.surface2, borderRadius: "10px" }}>
+        <div>
+          <div style={{ fontSize: "9px", color: t.textDim, fontWeight: "700", marginBottom: "4px" }}>DATA USED</div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            {opp.dataUsed.map(d => <span key={d} style={{ fontSize: "11px", color: t.text }}>• {d}</span>)}
+          </div>
+        </div>
+      </div>
+
+      {isActiveScenario && opp.missingFacts.length > 0 && (
+        <div style={{ background: `${t.amber}11`, border: `1px solid ${t.amber}33`, borderRadius: "12px", padding: "16px", marginBottom: "20px" }}>
+          <div style={{ fontSize: "12px", color: t.amber, fontWeight: "700", marginBottom: "12px" }}>ONE FINAL FACT NEEDED</div>
+          {opp.missingFacts.map(fact => (
+            <div key={fact.id}>
+              <label style={{ fontSize: "11px", color: t.textDim, display: "block", marginBottom: "6px" }}>{fact.label}</label>
+              <input 
+                type={fact.type === "currency" ? "number" : fact.type} 
+                value={tempValue} 
+                onChange={(e) => setTempValue(e.target.value)}
+                placeholder={fact.placeholder}
+                autoFocus
+                style={{ background: t.inputBg, border: `1px solid ${t.amber}44`, borderRadius: "8px", color: t.text, padding: "10px 14px", width: "100%", outline: "none", fontSize: "14px" }}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "10px" }}>
+          {!isActiveScenario ? (
+            <>
+              <button 
+                onClick={() => setActiveScenarioId(opp.id)}
+                style={{ background: t.blue, color: "#fff", border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "13px", fontWeight: "700", cursor: "pointer", transition: "all 0.15s" }}
+              >
+                Apply scenario
+              </button>
+              <button 
+                onClick={onDismiss}
+                style={{ background: "none", color: t.textDim, border: `1px solid ${t.border}`, borderRadius: "10px", padding: "10px 20px", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}
+              >
+                Dismiss
+              </button>
+            </>
+          ) : (
+            <>
+              <button 
+                onClick={() => {
+                  onApply(parseFloat(tempValue) || opp.estSavings / 0.22); // naive fallback
+                  setActiveScenarioId(null);
+                  setTempValue("");
+                }}
+                style={{ background: t.green, color: "#fff", border: "none", borderRadius: "10px", padding: "10px 24px", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}
+              >
+                Confirm & Add to Profile
+              </button>
+              <button 
+                onClick={() => { setActiveScenarioId(null); setTempValue(""); }}
+                style={{ background: "none", color: t.textDim, border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+            </>
+          )}
+        </div>
+        <button style={{ background: "none", border: "none", color: t.blue, fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>Ask Wrytoff AI about this →</button>
+      </div>
     </div>
   );
 }
@@ -701,7 +1001,8 @@ function TaxBot({ t, calc, expenses, dispatch, setActiveTab }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content })),
-          system: `You are Wrytoff AI. Help the user optimize taxes. Actions: SET_W2_INCOME, SET_BIZ_INCOME, ADD_EXPENSE {vendor, category, amount, frequency}.`
+          system: `You are Wrytoff AI. Help the user optimize taxes. Analyze their context: Net SE: ${fmt(calc.netSE)}, Position: ${fmt(calc.position)}. 
+          Actions: SET_W2_INCOME, SET_BIZ_INCOME, ADD_EXPENSE {vendor, category, amount, frequency}, APPLY_OPTIMIZATION {field, value}.`
         }),
       });
       const data = await resp.json();
@@ -761,8 +1062,8 @@ function DeductionPlaybook({ t }) {
 
 const DARK = {
   bg: "#0a0a0f", surface: "#111827", surface2: "#0f172a", border: "#1e293b", border2: "#334155",
-  text: "#e2e8f0", textMuted: "#94a3b8", textDim: "#64748b", textFaint: "#475569", blue: "#3b82f6", green: "#10b981", red: "#ef4444", 
-  modalOverlay: "rgba(0,0,0,0.7)", modalBg: "#111827", headerBg: "#0a0a0f",
+  text: "#e2e8f0", textMuted: "#94a3b8", textDim: "#64748b", textFaint: "#475569", blue: "#3b82f6", green: "#10b981", red: "#ef4444", amber: "#f59e0b",
+  modalOverlay: "rgba(0,0,0,0.7)", modalBg: "#111827", headerBg: "#0a0a0f", inputBg: "#0f172a",
   effectiveBg: "#0f2a1e", effectiveBorder: "#10b98144", effectiveLabel: "#10b981", effectiveNum: "#10b981",
   irsTagBg: "#1a1c2e", irsTagText: "#93c5fd", irsTagBorder: "#3b82f633",
   catColors: {
@@ -782,8 +1083,8 @@ const DARK = {
 };
 const LIGHT = {
   bg: "#f8fafc", surface: "#ffffff", surface2: "#f1f5f9", border: "#e2e8f0", border2: "#cbd5e1",
-  text: "#0f172a", textMuted: "#475569", textDim: "#64748b", textFaint: "#94a3b8", blue: "#2563eb", green: "#16a34a", red: "#dc2626",
-  modalOverlay: "rgba(0,0,0,0.4)", modalBg: "#ffffff", headerBg: "#f8fafc",
+  text: "#0f172a", textMuted: "#475569", textDim: "#64748b", textFaint: "#94a3b8", blue: "#2563eb", green: "#16a34a", red: "#dc2626", amber: "#f59e0b",
+  modalOverlay: "rgba(0,0,0,0.4)", modalBg: "#ffffff", headerBg: "#f8fafc", inputBg: "#f1f5f9",
   effectiveBg: "#f0fdf4", effectiveBorder: "#16a34a44", effectiveLabel: "#16a34a", effectiveNum: "#16a34a",
   irsTagBg: "#eff6ff", irsTagText: "#2563eb", irsTagBorder: "#3b82f633",
   catColors: {
