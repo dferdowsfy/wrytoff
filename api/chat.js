@@ -1,12 +1,18 @@
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  
+export const config = {
+  runtime: 'edge',
+};
+
+export default async function (req) {
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+  }
+
   try {
-    const { system, messages, model } = req.body;
+    const { system, messages, model } = await req.json();
     const key = process.env.VITE_OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY;
     
     if (!key) {
-      return res.status(401).json({ error: "Missing OPENROUTER_API_KEY in Vercel environment" });
+      return new Response(JSON.stringify({ error: 'Missing API Key' }), { status: 401 });
     }
 
     const openRouterMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
@@ -26,11 +32,17 @@ export default async function handler(req, res) {
     });
     
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || "OpenRouter API error");
+    
+    if (!response.ok) {
+      return new Response(JSON.stringify({ error: data.error?.message || 'OpenRouter Error' }), { status: response.status });
+    }
 
-    res.status(200).json({ content: data.choices[0].message.content });
+    return new Response(JSON.stringify({ content: data.choices[0].message.content }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (error) {
     console.error("Chat API Error:", error);
-    res.status(500).json({ error: error.message });
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 }
