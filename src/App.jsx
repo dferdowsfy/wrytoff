@@ -582,52 +582,61 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
     setIsParsingW2(true);
 
     try {
-      const reader = new FileReader();
-      reader.onload = async (evt) => {
-        const base64Content = evt.target.result.split(',')[1];
-        const mediaType = file.type;
-
-        // Use relative path for production (Vercel), direct port for localhost to bypass proxy issues
-        const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/parse-w2' : '/api/parse-w2';
-        
-        const res = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: [{
-              role: 'user',
-              content: [
-                { type: "text", text: "Parse this W-2. Response MUST be a JSON block: { \"wages\": number, \"federalWithholding\": number, \"employerName\": \"string\", \"stateName\": \"string\", \"stateWithholding\": number, \"zipCode\": \"string\" }" },
-                { type: "image", source: { type: "base64", media_type: mediaType, data: base64Content } }
-              ]
-            }]
-          })
-        });
-
-        const data = await res.json();
-        if (data.content) {
+      // Wrap FileReader in a Promise so the finally block waits for the full async flow
+      await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("File read failed"));
+        reader.onload = async (evt) => {
           try {
-            // Stronger regex to extract JSON blocks even if surrounded by text
-            const cleanJson = data.content.match(/\{[\s\S]*\}/)?.[0];
-            const parsed = JSON.parse(cleanJson);
-            if (parsed.wages) setW2Income(parsed.wages);
-            if (parsed.federalWithholding) setW2Withheld(parsed.federalWithholding);
-            if (parsed.employerName) setEmployerName(parsed.employerName);
-            if (parsed.stateWithholding) setScenario(prev => ({ ...prev, stateWithheld: parsed.stateWithholding }));
-            if (parsed.stateName) setScenario(prev => ({ ...prev, stateName: parsed.stateName }));
-            alert("W-2 Data Successfully Synced!");
-          } catch (pe) {
-            console.error("JSON Parse error:", pe, data.content);
-            alert("Could not interpret AI response. Please enter manually.");
+            const base64Content = evt.target.result.split(',')[1];
+            const mediaType = file.type || 'image/png';
+
+            const apiUrl = window.location.hostname === 'localhost'
+              ? 'http://localhost:3001/api/parse-w2'
+              : '/api/parse-w2';
+
+            const res = await fetch(apiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                messages: [{
+                  role: 'user',
+                  content: [
+                    { type: "text", text: "Parse this W-2 document. Return ONLY a JSON object with no extra text: { \"wages\": number, \"federalWithholding\": number, \"employerName\": \"string\", \"stateName\": \"string\", \"stateWithholding\": number, \"zipCode\": \"string\" }" },
+                    { type: "image", source: { type: "base64", media_type: mediaType, data: base64Content } }
+                  ]
+                }]
+              })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "API error");
+
+            if (data.content) {
+              const cleanJson = data.content.match(/\{[\s\S]*\}/)?.[0];
+              const parsed = JSON.parse(cleanJson);
+              if (parsed.wages) setW2Income(parsed.wages);
+              if (parsed.federalWithholding) setW2Withheld(parsed.federalWithholding);
+              if (parsed.employerName) setEmployerName(parsed.employerName);
+              if (parsed.stateWithholding) setScenario(prev => ({ ...prev, stateWithheld: parsed.stateWithholding }));
+              if (parsed.stateName) setScenario(prev => ({ ...prev, stateName: parsed.stateName }));
+              alert("W-2 Data Successfully Synced!");
+            }
+            resolve();
+          } catch (err) {
+            console.error("W-2 parse error:", err);
+            alert("Could not interpret W-2 response. Please enter values manually.");
+            resolve(); // resolve so finally still clears loading state
           }
-        }
-      };
-      reader.readAsDataURL(file);
+        };
+        reader.readAsDataURL(file);
+      });
     } catch (err) {
       console.error("Upload error:", err);
-      alert("Error uploading file.");
+      alert("Error reading file. Please try again.");
     } finally {
       setIsParsingW2(false);
+      if (w2FileRef.current) w2FileRef.current.value = "";
     }
   };
 
@@ -910,24 +919,33 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
 function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, setActiveScenarioId, tempScenarioValue, setTempScenarioValue, fmt }) {
   const [isScanning, setIsScanning] = useState(false);
   const [hasScanned, setHasScanned] = useState(false);
+  const [aiInsights, setAiInsights] = useState(null);
 
   const ranking = useMemo(() => {
     return OPPORTUNITIES.map(opp => {
       const applies = opp.check(ctx);
       const savings = opp.estimate ? opp.estimate(ctx) : 0;
-      // AI ranking logic simulation
       let aiScore = (savings / 1000) * (opp.priority || 1);
       if (opp.confidence === "High") aiScore *= 1.2;
       return { ...opp, applies, estSavings: savings, aiScore };
     }).filter(opp => !ctx.dismissedOpps.includes(opp.id));
   }, [ctx]);
 
-  const topOpps = ranking.filter(o => o.applies && !o.advanced).sort((a, b) => b.aiScore - a.aiScore);
+  // If AI scan returned a ranking, reorder topOpps by AI's rankedIds; otherwise fall back to score sort
+  const baseTopOpps = ranking.filter(o => o.applies && !o.advanced).sort((a, b) => b.aiScore - a.aiScore);
+  const topOpps = useMemo(() => {
+    if (!aiInsights?.rankedIds?.length) return baseTopOpps;
+    const aiOrder = aiInsights.rankedIds;
+    const inAiOrder = baseTopOpps.filter(o => aiOrder.includes(o.id)).sort((a, b) => aiOrder.indexOf(a.id) - aiOrder.indexOf(b.id));
+    const notInAiOrder = baseTopOpps.filter(o => !aiOrder.includes(o.id));
+    return [...inAiOrder, ...notInAiOrder];
+  }, [baseTopOpps, aiInsights]);
+
   const secondaryOppsArr = ranking.filter(o => !o.applies && !o.advanced);
   const advancedOppsArr = ranking.filter(o => o.advanced);
-  
+
   const [selectedOppId, setSelectedOppId] = useState(null);
-  
+
   useEffect(() => {
     if (topOpps.length > 0 && !selectedOppId) {
       setSelectedOppId(topOpps[0].id);
@@ -937,12 +955,38 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
   const selectedOpp = topOpps.find(o => o.id === selectedOppId) || topOpps[0];
   const totalPotential = topOpps.reduce((s, o) => s + o.estSavings, 0);
 
-  const triggerScan = () => {
+  const triggerScan = async () => {
     setIsScanning(true);
-    setTimeout(() => {
+    try {
+      const apiUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:3001/api/optimize'
+        : '/api/optimize';
+
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bizIncome: ctx.bizIncome,
+          w2Income: ctx.totalIncome - ctx.bizIncome,
+          netSE: ctx.netSE,
+          marginal: ctx.marginal,
+          totalBizDed: ctx.totalBizDed,
+          expenses: ctx.expenses,
+          scenario: ctx.scenario,
+          position: ctx.position,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.rankedIds || data.topInsight) setAiInsights(data);
+      }
+    } catch (err) {
+      console.error("AI scan error:", err);
+    } finally {
       setIsScanning(false);
       setHasScanned(true);
-    }, 2400);
+    }
   };
 
   return (
@@ -986,9 +1030,15 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
         <div style={{ borderLeft: `1px solid ${t.border}`, borderRight: `1px solid ${t.border}`, padding: "0 24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Best Next Move</div>
-            {!hasScanned && <button onClick={triggerScan} style={{ background: t.blue, color: "#fff", border: "none", borderRadius: "4px", padding: "2px 8px", fontSize: "10px", fontWeight: "700", cursor: "pointer" }}>⚡ AI SCAN</button>}
+            {!hasScanned && (
+              <button onClick={triggerScan} disabled={isScanning} style={{ background: t.blue, color: "#fff", border: "none", borderRadius: "4px", padding: "2px 8px", fontSize: "10px", fontWeight: "700", cursor: isScanning ? "default" : "pointer", opacity: isScanning ? 0.7 : 1 }}>
+                {isScanning ? "SCANNING..." : "⚡ AI SCAN"}
+              </button>
+            )}
           </div>
-          {topOpps.length > 0 ? (
+          {aiInsights?.topInsight ? (
+            <div style={{ fontSize: "13px", fontWeight: "500", color: "#fff", lineHeight: "1.4" }}>{aiInsights.topInsight}</div>
+          ) : topOpps.length > 0 ? (
             <div style={{ fontSize: "18px", fontWeight: "600", color: "#fff" }}>{topOpps[0].title}</div>
           ) : (
             <div style={{ fontSize: "18px", fontWeight: "600", color: t.green }}>Fully Optimized ✓</div>
@@ -1037,18 +1087,19 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
         {selectedOpp && (
           <div style={{ transition: "all 0.3s ease-out", animation: "tabEnter 0.3s ease-out" }}>
             <style>{` @keyframes tabEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } } `}</style>
-            <OpportunityCard 
-              key={selectedOpp.id} 
-              t={t} 
-              opp={selectedOpp} 
+            <OpportunityCard
+              key={selectedOpp.id}
+              t={t}
+              opp={selectedOpp}
               ctx={ctx}
-              onApply={(val) => onApply(selectedOpp, val)} 
+              onApply={(val) => onApply(selectedOpp, val)}
               onDismiss={() => onDismiss(selectedOpp.id)}
               isActiveScenario={activeScenarioId === selectedOpp.id}
               setActiveScenarioId={setActiveScenarioId}
               tempValue={tempScenarioValue}
               setTempValue={setTempScenarioValue}
               fmt={fmt}
+              aiInsight={aiInsights?.insights?.[selectedOpp.id]}
             />
           </div>
         )}
@@ -1082,15 +1133,15 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
   );
 }
 
-function OpportunityCard({ t, opp, ctx, onApply, onDismiss, isActiveScenario, setActiveScenarioId, tempValue, setTempValue, fmt }) {
+function OpportunityCard({ t, opp, ctx, onApply, onDismiss, isActiveScenario, setActiveScenarioId, tempValue, setTempValue, fmt, aiInsight }) {
   const isApplied = ctx.scenario[opp.field] > 0 || (opp.id === "home-office" && ctx.homeOfficeDed > 0);
 
   return (
-    <div className="opp-card" style={{ 
-      background: isActiveScenario ? `${t.blue}08` : t.surface, 
-      border: `1px solid ${isActiveScenario ? t.blue : t.border}`, 
-      borderRadius: "16px", 
-      padding: "24px", 
+    <div className="opp-card" style={{
+      background: isActiveScenario ? `${t.blue}08` : t.surface,
+      border: `1px solid ${isActiveScenario ? t.blue : t.border}`,
+      borderRadius: "16px",
+      padding: "24px",
       transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
       position: "relative",
       overflow: "hidden"
@@ -1110,9 +1161,16 @@ function OpportunityCard({ t, opp, ctx, onApply, onDismiss, isActiveScenario, se
         </div>
       </div>
 
-      <div style={{ fontSize: "14px", color: t.textMuted, lineHeight: "1.5", marginBottom: "20px", maxWidth: "80%" }}>
+      <div style={{ fontSize: "14px", color: t.textMuted, lineHeight: "1.5", marginBottom: aiInsight ? "12px" : "20px", maxWidth: "80%" }}>
         {opp.whyMsg}
       </div>
+
+      {aiInsight && (
+        <div style={{ background: `${t.blue}0d`, border: `1px solid ${t.blue}33`, borderRadius: "8px", padding: "10px 14px", marginBottom: "20px", display: "flex", gap: "8px", alignItems: "flex-start" }}>
+          <span style={{ fontSize: "11px", fontWeight: "700", color: t.blue, whiteSpace: "nowrap", marginTop: "1px" }}>⚡ AI</span>
+          <span style={{ fontSize: "12px", color: t.text, lineHeight: "1.45" }}>{aiInsight}</span>
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: "24px", marginBottom: "20px", padding: "12px", background: t.surface2, borderRadius: "10px" }}>
         <div>
@@ -1189,10 +1247,18 @@ function OpportunityCard({ t, opp, ctx, onApply, onDismiss, isActiveScenario, se
 // ─────────────────────────────────────────────
 // TAXBOT
 // ─────────────────────────────────────────────
+const CHAT_STARTERS = [
+  "What deductions am I missing?",
+  "How much can I save with a SEP-IRA?",
+  "Can I deduct my home office?",
+  "Add a software subscription expense",
+  "What is my estimated refund?",
+];
+
 function TaxBot({ t, calc, expenses, dispatch, setActiveTab }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hi! I'm Wrytoff AI. I can answer questions and update your tax data directly." }
+    { role: "assistant", content: "Hi, I am Wrytoff AI. Ask me about your taxes, deductions, or how to reduce what you owe. I can also update your numbers directly." }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1200,9 +1266,39 @@ function TaxBot({ t, calc, expenses, dispatch, setActiveTab }) {
 
   useEffect(() => { if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, open]);
 
-  const send = async () => {
-    if (!input.trim() || loading) return;
-    const userMsg = { role: "user", content: input };
+  const buildSystemPrompt = () => {
+    const expList = expenses.length > 0
+      ? expenses.slice(0, 10).map(e => `${e.vendor} (${e.category}) $${Math.round(e.annualizedAmount || e.amount || 0)}/yr`).join(", ")
+      : "none tracked yet";
+    return `You are Wrytoff AI, a friendly tax assistant for self-employed business owners. Answer in plain conversational language. Keep responses short and clear. Do not use asterisks, hashtags, or any markdown formatting symbols in your replies.
+
+Current user tax profile:
+- Business income: ${fmt(calc.netSE + calc.totalBizDed)}
+- W-2 income: ${fmt(calc.totalIncome - calc.netSE - calc.totalBizDed)}
+- Net self-employment income: ${fmt(calc.netSE)}
+- Total business deductions: ${fmt(calc.totalBizDed)}
+- Adjusted gross income: ${fmt(calc.agi)}
+- Federal tax owed: ${fmt(calc.fedTax)}
+- SE tax: ${fmt(calc.seTax)}
+- Withholding: ${fmt(calc.withheld)}
+- Estimated tax position: ${calc.isRefund ? "refund of " : "owed "}${fmt(calc.position)}
+- Marginal tax rate: ${pct(calc.marginal)}
+- Tracked expenses (${expenses.length} items): ${expList}
+
+IRS context: Standard deduction MFJ is $30,000 in 2026. SE tax is 15.3% on 92.35% of net SE income. Half of SE tax is deductible above the line. SEP-IRA max is 25% of net SE or $69,000. Meals are 50% deductible. Mileage rate is $0.70/mile.
+
+You can take actions to update the user profile by including a JSON block when the user explicitly asks to add or change something. Format:
+\`\`\`actions
+[{"type":"ADD_EXPENSE","expense":{"vendor":"Name","category":"Software & Subscriptions","amount":100,"frequency":"monthly"}},{"type":"SET_BIZ_INCOME","value":120000}]
+\`\`\`
+Available action types: SET_W2_INCOME (value), SET_BIZ_INCOME (value), ADD_EXPENSE (expense object with vendor/category/amount/frequency), APPLY_OPTIMIZATION (field, value), NAVIGATE (tab: "expenses"|"income"|"optimizations"|"summary").
+Only include an actions block when the user explicitly asks to add or change data.`;
+  };
+
+  const sendMessage = async (text) => {
+    const content = text || input;
+    if (!content.trim() || loading) return;
+    const userMsg = { role: "user", content };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setLoading(true);
@@ -1210,47 +1306,90 @@ function TaxBot({ t, calc, expenses, dispatch, setActiveTab }) {
       const resp = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content })),
-          system: `You are Wrytoff AI. Help the user optimize taxes. Analyze their context: Net SE: ${fmt(calc.netSE)}, Position: ${fmt(calc.position)}. 
-          Actions: SET_W2_INCOME, SET_BIZ_INCOME, ADD_EXPENSE {vendor, category, amount, frequency}, APPLY_OPTIMIZATION {field, value}.`
+          system: buildSystemPrompt(),
         }),
       });
-      const data = await resp.json();
-      const raw = data.content;
-      
-      const match = raw.match(/```actions\s*([\s\S]*?)```/);
-      if (match) {
-        try {
-          const actions = JSON.parse(match[1].trim());
-          dispatch(actions);
-        } catch (e) {}
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${resp.status}`);
       }
-      
-      setMessages(prev => [...prev, { role: "assistant", content: raw.replace(/```actions[\s\S]*?```/g, "").trim() }]);
-    } catch (e) {
-      setMessages(prev => [...prev, { role: "assistant", content: "Connection error." }]);
+
+      const data = await resp.json();
+      const raw = data.content || "";
+
+      // Parse and dispatch any actions block
+      const actionMatch = raw.match(/```actions\s*([\s\S]*?)```/);
+      if (actionMatch) {
+        try {
+          const actions = JSON.parse(actionMatch[1].trim());
+          if (Array.isArray(actions)) dispatch(actions);
+        } catch (_) {}
+      }
+
+      const displayText = raw.replace(/```actions[\s\S]*?```/g, "").trim();
+      setMessages(prev => [...prev, { role: "assistant", content: displayText || "Done." }]);
+    } catch (err) {
+      setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong. Please try again." }]);
+      console.error("TaxBot error:", err);
     }
     setLoading(false);
   };
 
+  const showStarters = messages.length === 1;
+
   return (
     <>
-      <div onClick={() => setOpen(!open)} style={{ position: "fixed", bottom: "24px", right: "24px", background: "#2563eb", color: "#fff", borderRadius: "30px", padding: "10px 20px", cursor: "pointer", boxShadow: "0 10px 20px rgba(0,0,0,0.2)", zIndex: 1000, fontWeight: "600" }}>
+      <div
+        onClick={() => setOpen(!open)}
+        style={{ position: "fixed", bottom: "24px", right: "24px", background: "#2563eb", color: "#fff", borderRadius: "30px", padding: "10px 20px", cursor: "pointer", boxShadow: "0 10px 20px rgba(0,0,0,0.2)", zIndex: 1000, fontWeight: "600", userSelect: "none" }}
+      >
         {open ? "Close Chat" : "Ask Wrytoff AI"}
       </div>
       {open && (
-        <div style={{ position: "fixed", bottom: "80px", right: "24px", width: "350px", height: "500px", background: t.surface, border: `1px solid ${t.border}`, borderRadius: "16px", boxShadow: "0 20px 40px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", zIndex: 1000 }}>
+        <div style={{ position: "fixed", bottom: "80px", right: "24px", width: "360px", height: "520px", background: t.surface, border: `1px solid ${t.border}`, borderRadius: "16px", boxShadow: "0 20px 40px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", zIndex: 1000 }}>
+          <div style={{ padding: "12px 16px", borderBottom: `1px solid ${t.border}`, fontSize: "13px", fontWeight: "700", color: t.textDim }}>WRYTOFF AI</div>
           <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
             {messages.map((m, i) => (
               <div key={i} style={{ marginBottom: "12px", textAlign: m.role === "user" ? "right" : "left" }}>
-                <div style={{ display: "inline-block", background: m.role === "user" ? "#2563eb" : t.surface2, color: m.role === "user" ? "#fff" : t.text, padding: "8px 12px", borderRadius: "12px", fontSize: "13px", maxWidth: "85%" }}>{m.content}</div>
+                <div style={{ display: "inline-block", background: m.role === "user" ? "#2563eb" : t.surface2, color: m.role === "user" ? "#fff" : t.text, padding: "8px 12px", borderRadius: "12px", fontSize: "13px", maxWidth: "85%", lineHeight: "1.45" }}>
+                  {m.content}
+                </div>
               </div>
             ))}
+            {showStarters && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "8px" }}>
+                {CHAT_STARTERS.map(s => (
+                  <button
+                    key={s}
+                    onClick={() => sendMessage(s)}
+                    style={{ background: t.bg, border: `1px solid ${t.border2}`, borderRadius: "8px", padding: "7px 11px", fontSize: "12px", color: t.blue, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+            {loading && (
+              <div style={{ textAlign: "left", marginBottom: "12px" }}>
+                <div style={{ display: "inline-block", background: t.surface2, padding: "8px 14px", borderRadius: "12px", fontSize: "12px", color: t.textDim }}>
+                  Thinking...
+                </div>
+              </div>
+            )}
             <div ref={bottomRef} />
           </div>
           <div style={{ padding: "12px", borderTop: `1px solid ${t.border}` }}>
-            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} placeholder="Type something..." style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: `1px solid ${t.border}`, background: t.bg, color: t.text, outline: "none", boxSizing: "border-box" }} />
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && sendMessage()}
+              placeholder="Ask a tax question..."
+              disabled={loading}
+              style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: `1px solid ${t.border}`, background: t.bg, color: t.text, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontSize: "13px" }}
+            />
           </div>
         </div>
       )}
