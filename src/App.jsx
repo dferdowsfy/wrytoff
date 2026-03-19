@@ -762,14 +762,42 @@ function DeductionPlaybook({ t }) {
 const DARK = {
   bg: "#0a0a0f", surface: "#111827", surface2: "#0f172a", border: "#1e293b", border2: "#334155",
   text: "#e2e8f0", textMuted: "#94a3b8", textDim: "#64748b", textFaint: "#475569", blue: "#3b82f6", green: "#10b981", red: "#ef4444", 
-  modalOverlay: "rgba(0,0,0,0.7)", modalBg: "#111827", headerBg: "#0a0a0f", catColors: {},
+  modalOverlay: "rgba(0,0,0,0.7)", modalBg: "#111827", headerBg: "#0a0a0f",
   effectiveBg: "#0f2a1e", effectiveBorder: "#10b98144", effectiveLabel: "#10b981", effectiveNum: "#10b981",
-  irsTagBg: "#1a1c2e", irsTagText: "#93c5fd", irsTagBorder: "#3b82f633"
+  irsTagBg: "#1a1c2e", irsTagText: "#93c5fd", irsTagBorder: "#3b82f633",
+  catColors: {
+    "Housing & Real Estate": { bg: "#422006", accent: "#fbbf24", text: "#fbbf24" },
+    "Utilities": { bg: "#422006", accent: "#fbbf24", text: "#fbbf24" },
+    "Software & Subscriptions": { bg: "#1e3a8a", accent: "#60a5fa", text: "#60a5fa" },
+    "Meals & Entertainment": { bg: "#064e3b", accent: "#34d399", text: "#34d399" },
+    "Travel & Transportation": { bg: "#4c1d95", accent: "#a78bfa", text: "#a78bfa" },
+    "Professional Services": { bg: "#164e63", accent: "#22d3ee", text: "#22d3ee" },
+    "Education & Development": { bg: "#312e81", accent: "#818cf8", text: "#818cf8" },
+    "Marketing & Advertising": { bg: "#7c2d12", accent: "#fb923c", text: "#fb923c" },
+    "Equipment & Hardware": { bg: "#1e293b", accent: "#94a3b8", text: "#94a3b8" },
+    "Insurance": { bg: "#831843", accent: "#f472b6", text: "#f472b6" },
+    "Retirement & Benefits": { bg: "#134e4a", accent: "#2dd4bf", text: "#2dd4bf" },
+    "Office & Supplies": { bg: "#374151", accent: "#9ca3af", text: "#9ca3af" },
+  }
 };
 const LIGHT = {
   bg: "#f8fafc", surface: "#ffffff", surface2: "#f1f5f9", border: "#e2e8f0", border2: "#cbd5e1",
   text: "#0f172a", textMuted: "#475569", textDim: "#64748b", textFaint: "#94a3b8", blue: "#2563eb", green: "#16a34a", red: "#dc2626",
-  modalOverlay: "rgba(0,0,0,0.4)", modalBg: "#ffffff", headerBg: "#f8fafc", catColors: {},
+  modalOverlay: "rgba(0,0,0,0.4)", modalBg: "#ffffff", headerBg: "#f8fafc",
   effectiveBg: "#f0fdf4", effectiveBorder: "#16a34a44", effectiveLabel: "#16a34a", effectiveNum: "#16a34a",
-  irsTagBg: "#eff6ff", irsTagText: "#2563eb", irsTagBorder: "#3b82f633"
+  irsTagBg: "#eff6ff", irsTagText: "#2563eb", irsTagBorder: "#3b82f633",
+  catColors: {
+    "Housing & Real Estate": { bg: "#fef2f2", accent: "#ef4444", text: "#991b1b" },
+    "Utilities": { bg: "#fffbeb", accent: "#f59e0b", text: "#92400e" },
+    "Software & Subscriptions": { bg: "#eff6ff", accent: "#3b82f6", text: "#1e40af" },
+    "Meals & Entertainment": { bg: "#f0fdf4", accent: "#10b981", text: "#065f46" },
+    "Travel & Transportation": { bg: "#faf5ff", accent: "#8b5cf6", text: "#5b21b6" },
+    "Professional Services": { bg: "#ecfeff", accent: "#06b6d4", text: "#155e75" },
+    "Education & Development": { bg: "#f5f3ff", accent: "#7c3aed", text: "#4c1d95" },
+    "Marketing & Advertising": { bg: "#fff7ed", accent: "#f97316", text: "#9a3412" },
+    "Equipment & Hardware": { bg: "#f8fafc", accent: "#64748b", text: "#334155" },
+    "Insurance": { bg: "#fdf2f7", accent: "#db2777", text: "#9d174d" },
+    "Retirement & Benefits": { bg: "#f0fdfa", accent: "#14b8a6", text: "#115e59" },
+    "Office & Supplies": { bg: "#f9fafb", accent: "#6b7280", text: "#374151" },
+  }
 };
