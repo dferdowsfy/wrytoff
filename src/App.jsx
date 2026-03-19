@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect, Fragment } from "react";
 import { db } from './firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
@@ -1177,7 +1177,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                         const needsReview = e.status === "Needs Review" || !e.frequency;
 
                         return (
-                          <React.Fragment key={e.id}>
+                          <Fragment key={e.id}>
                             <tr style={{ 
                               borderBottom: `1px solid ${t.border}`, 
                               background: needsReview ? (isDark ? "#2a1212" : "#fff1f2") : (i % 2 === 0 ? "transparent" : t.surface2 + "88"),
@@ -1255,7 +1255,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                                 </td>
                               </tr>
                             )}
-                          </React.Fragment>
+                          </Fragment>
                         );
                       })}
                     </tbody>
