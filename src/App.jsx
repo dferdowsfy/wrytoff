@@ -435,6 +435,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   const [w2Withheld, setW2Withheld] = useState(0);
   const [spouseWithheld, setSpouseWithheld] = useState(0);
   const [bizIncome, setBizIncome] = useState(0);
+  const [employerName, setEmployerName] = useState("");
   const [homeOfficeDed, setHomeOfficeDed] = useState(0);
   const [scenario, setScenario] = useState({ posture: "Standard", sepIra: 0, healthIns: 0, mileage: 0, filingStatus: "MFJ" });
   const [activeTab, setActiveTab] = useState("optimizations");
@@ -586,7 +587,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
         const base64Content = evt.target.result.split(',')[1];
         const mediaType = file.type;
 
-        // Call our Vercel Serverless Function
+        // Call our Vercel Serverless Function / Express Proxy
         const res = await fetch('/api/parse-w2', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -594,7 +595,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
             messages: [{
               role: 'user',
               content: [
-                { type: "text", text: "Extract W-2 data from this image/document. Return ONLY a valid JSON object with keys: wages (Box 1), withholding (Box 2). Format: { \"wages\": 1234.56, \"withholding\": 123.45 }" },
+                { type: "text", text: "Extract W-2 data. Return ONLY a valid JSON object with: { wages, federalWithholding, employerName, stateName, stateWithholding, zipCode }. Numbers only for currency." },
                 { type: "image", source: { type: "base64", media_type: mediaType, data: base64Content } }
               ]
             }]
@@ -607,8 +608,10 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
             const cleanJson = data.content.match(/\{.*\}/s)?.[0];
             const parsed = JSON.parse(cleanJson);
             if (parsed.wages) setW2Income(parsed.wages);
-            if (parsed.withholding) setW2Withheld(parsed.withholding);
-            alert("W-2 Successfully Parsed!");
+            if (parsed.federalWithholding) setW2Withheld(parsed.federalWithholding);
+            if (parsed.employerName) setEmployerName(parsed.employerName);
+            if (parsed.stateWithholding) setScenario(prev => ({ ...prev, stateWithheld: parsed.stateWithholding }));
+            alert("W-2 Successfully Processed!");
           } catch (pe) {
             console.error("JSON Parse error:", pe, data.content);
             alert("Could not interpret AI response. Please enter manually.");
@@ -804,7 +807,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                     boxShadow: `0 4px 12px ${t.blue}44`, display: "flex", alignItems: "center", gap: "10px", width: "100%", justifyContent: "center"
                   }}
                 >
-                  {isParsingW2 ? "Parsing W-2..." : "📄 Extract W-2 with AI"}
+                  {isParsingW2 ? "Processing..." : "📄 Upload W-2 for Instant Analysis"}
                 </button>
               </div>
             </div>
@@ -815,13 +818,30 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                 <div style={{ fontSize: "14px", fontWeight: "700", color: t.blue, marginBottom: "20px" }}>PRIMARY HOLDER</div>
                 
                 <div style={{ marginBottom: "20px" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>W-2 WAGES (GROSS)</div>
-                  <input type="number" value={w2Income || ""} onChange={e => setW2Income(parseFloat(e.target.value) || 0)} placeholder="Enter Box 1 amount" style={{ ...bigInp(), textAlign: "left" }} />
+                  <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>EMPLOYER (BOX C)</div>
+                  <input type="text" value={employerName || ""} onChange={e => setEmployerName(e.target.value)} placeholder="Company Name" style={{ ...bigInp(), textAlign: "left" }} />
                 </div>
-                
-                <div style={{ marginBottom: "20px" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>FEDERAL WITHHOLDING</div>
-                  <input type="number" value={w2Withheld || ""} onChange={e => setW2Withheld(parseFloat(e.target.value) || 0)} placeholder="Enter Box 2 amount" style={{ ...bigInp(), textAlign: "left", color: t.green }} />
+
+                <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "12px", marginBottom: "20px" }}>
+                  <div>
+                    <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>WAGES (BOX 1)</div>
+                    <input type="number" value={w2Income || ""} onChange={e => setW2Income(parseFloat(e.target.value) || 0)} style={{ ...bigInp(), textAlign: "left" }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>FED WITHHELD (BOX 2)</div>
+                    <input type="number" value={w2Withheld || ""} onChange={e => setW2Withheld(parseFloat(e.target.value) || 0)} style={{ ...bigInp(), textAlign: "left", color: t.green }} />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+                  <div>
+                    <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>STATE NAME</div>
+                    <input type="text" value={scenario.stateName || ""} onChange={e => setScenario(prev => ({ ...prev, stateName: e.target.value }))} style={{ ...bigInp(), textAlign: "left" }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>STATE WITHHELD (BOX 17)</div>
+                    <input type="number" value={scenario.stateWithheld || ""} onChange={e => setScenario(prev => ({ ...prev, stateWithheld: parseFloat(e.target.value) || 0 }))} style={{ ...bigInp(), textAlign: "left" }} />
+                  </div>
                 </div>
 
                 <div style={{ borderTop: `1px dashed ${t.border}`, pt: "20px", marginTop: "20px" }}>
