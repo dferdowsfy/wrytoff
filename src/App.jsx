@@ -542,47 +542,13 @@ function W2Uploader({ onParsed, t }) {
         { type: "text", text: `Parse this W-2. Return ONLY valid JSON no markdown:{"employerName":null,"employeeName":null,"box1_wages":null,"box2_federalWithheld":null,"box4_socialSecurityWithheld":null,"box6_medicareWithheld":null,"box16_stateWages":null,"box17_stateTax":null,"taxYear":null}` },
       ];
 
-      const key = import.meta.env.VITE_OPENROUTER_API_KEY;
-      const model = import.meta.env.VITE_OPENROUTER_MODEL || "anthropic/claude-3.5-sonnet";
-      let result;
-
-      if (key) {
-        const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${key.trim()}`,
-            "HTTP-Referer": window.location.origin,
-            "X-Title": "Wrytoff"
-          },
-          body: JSON.stringify({
-            model: model,
-            messages: [{
-              role: "user",
-              content: content.map(c => {
-                if (c.type === "image" || c.type === "document") {
-                  return { type: "image_url", image_url: { url: `data:${c.source.media_type};base64,${c.source.data}` } };
-                }
-                return c;
-              })
-            }]
-          }),
-        });
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data.error?.message || "OpenRouter Error");
-        const raw = data.choices?.[0]?.message?.content || "";
-        result = JSON.parse(raw.replace(/```json|```/g, "").trim());
-      } else {
-        // Fallback to local server proxy
-        const resp = await fetch("/api/parse-w2", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "openai/gpt-5.4-nano", messages: [{ role: "user", content }] }),
-        });
-        const data = await resp.json();
-        const raw = typeof data.content === "string" ? data.content : (Array.isArray(data.content) ? data.content.find(b => b.type === "text")?.text : "") || "";
-        result = JSON.parse(raw.replace(/```json|```/g, "").trim());
-      }
-
+      const resp = await fetch("/api/parse-w2", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "openai/gpt-5.4-nano", messages: [{ role: "user", content }] }),
+      });
+      const data = await resp.json();
+      const raw = typeof data.content === "string" ? data.content : (Array.isArray(data.content) ? data.content.find(b => b.type === "text")?.text : "") || "";
+      const result = JSON.parse(raw.replace(/```json|```/g, "").trim());
       setParsed(result); onParsed(result); setStatus("done");
     } catch (err) { console.error(err); setStatus("error"); }
   };
@@ -1447,33 +1413,6 @@ RULES:
   const cleanReply = (reply) => reply.replace(/```actions[\s\S]*?```/g, "").trim();
 
   const callAI = async (msgs) => {
-    const key = import.meta.env.VITE_OPENROUTER_API_KEY;
-    const model = import.meta.env.VITE_OPENROUTER_MODEL || "anthropic/claude-3.5-sonnet";
-    if (key) {
-      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${key.trim()}`,
-          "HTTP-Referer": window.location.origin,
-          "X-Title": "Wrytoff"
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [
-            { role: "system", content: buildSystemPrompt() },
-            ...msgs.map(m => ({ role: m.role, content: m.content }))
-          ]
-        })
-      });
-      const data = await resp.json();
-      if (!resp.ok) {
-        console.error("OpenRouter direct error:", data);
-        return `Sorry, I got an error from the AI: ${data.error?.message || "Unauthorized"}`;
-      }
-      return data.choices?.[0]?.message?.content || "Sorry, I couldn't get a response.";
-    }
-
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
