@@ -34,6 +34,8 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: model || defaultModel,
         messages: openRouterMessages,
+        max_tokens: 1024,
+        temperature: 0.7,
       }),
     });
 
