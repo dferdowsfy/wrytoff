@@ -167,10 +167,9 @@ function calcAnnualized(amount, frequency) {
 }
 
 function calcDeductible(e) {
-  const base = e.annualizedAmount ?? e.amount;
-  // Meals always 50% IRS rule
+  const base = e.annualizedAmount ?? e.amount ?? 0;
   if (e.category === "Meals & Entertainment") return base * 0.50;
-  return base * e.bizPct;
+  return base * (e.bizPct ?? 1.0);
 }
 
 const fmt = (n) => "$" + Math.round(Math.abs(n)).toLocaleString();
@@ -758,7 +757,8 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
       if (e.id !== id) return e;
       const updated = { ...e, [field]: (field === "bizPct" || field === "amount" || field === "inputAmount") ? parseFloat(val) || 0 : val };
       if (field === "inputAmount" || field === "frequency") {
-        updated.annualizedAmount = calcAnnualized(updated.inputAmount, updated.frequency || "annual");
+        const inputAmount = updated.inputAmount || updated.amount || 0;
+        updated.annualizedAmount = calcAnnualized(inputAmount, updated.frequency || "annual");
         if (updated.frequency) updated.status = "Likely Deductible";
       }
       return updated;
@@ -1262,6 +1262,10 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                     <tfoot>
                       <tr style={{ background: t.tfoot, borderTop: `1px solid ${t.border2}` }}>
                         <td colSpan="4" style={{ padding: "10px 13px", fontWeight: "600", color: t.textMuted, fontSize: "12px" }}>TOTAL EXPENSES</td>
+                        <td style={{ padding: "10px 13px", fontFamily: "'DM Mono',monospace", color: t.text, fontWeight: "600", fontSize: "13px" }}>
+                          {fmt(expenses.reduce((s, e) => s + (e.annualizedAmount || e.amount || 0), 0))}
+                        </td>
+                        <td />
                         <td style={{ padding: "10px 13px", fontFamily: "'DM Mono',monospace", color: t.green, fontWeight: "600", fontSize: "14px" }}>
                           {fmt(expenses.reduce((s, e) => s + calcDeductible(e), 0))}
                         </td>
