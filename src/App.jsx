@@ -1368,19 +1368,18 @@ Available action types:
 - NAVIGATE — tab: "summary" | "expenses" | "income" | "optimizations" | "playbook"
 
 RESPONSE FORMAT:
-When a user asks about an expense deductibility, structure your natural language response exactly like this (use bold markdown):
-**Deductibility:** [Likely Yes / Partially / No / Needs Facts / High Scrutiny]
-**Amount:** [Full / Limited / Percentage Based]
-**Why:** [1-2 sentences plain English]
-**Dependencies:** [e.g. Requires exclusive business use]
-**Required Records:** [e.g. Receipts, mileage log]
-**Risk Posture:** [Standard / Aggressive / Conservative]
+When a user asks about an expense deductibility, structure your response as a clear, unformatted summary like this:
+Deductibility: [Likely Yes / Partially / No / Needs Facts / High Scrutiny]
+Amount: [Full / Limited / Percentage Based]
+Why: [1 sentence plain English]
+Requirements: [e.g. exclusive business use, receipts]
+Risk Level: [Standard / Aggressive / Conservative]
 
 RULES:
+- DO NOT use markdown bolding (**) or headers in your response.
+- Keep natural language responses extremely concise and professional.
 - Always include the actions block when you have data to apply — never just describe what SHOULD happen.
-- Use the structured response format for ALL questions about specific expenses or deductions.
 - If you need more info before acting, ask exactly what's missing.
-- Keep explanations under 150 words.
 - Always show the estimated tax savings from any new deduction you add.`;
   };
 
