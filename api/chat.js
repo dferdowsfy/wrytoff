@@ -1,48 +1,59 @@
-export const config = {
-  runtime: 'edge',
-};
-
-export default async function (req) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const key = process.env.VITE_OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY;
+  const defaultModel = process.env.VITE_OPENROUTER_MODEL || process.env.OPENROUTER_MODEL || 'openai/gpt-5.4-nano';
+
+  if (!key) {
+    return res.status(500).json({
+      error: 'Server missing OPENROUTER_API_KEY (or VITE_ variant)',
+      debug: {
+        hasOpenRouterKey: false,
+        vercelEnv: process.env.VERCEL_ENV || 'unknown',
+      },
+    });
   }
 
   try {
-    const { system, messages, model } = await req.json();
-    const key = process.env.VITE_OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY;
-    
-    if (!key) {
-      return new Response(JSON.stringify({ error: 'Missing API Key' }), { status: 401 });
-    }
+    const { system, messages = [], model } = req.body || {};
 
-    const openRouterMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
+    const openRouterMessages = system
+      ? [{ role: 'system', content: system }, ...messages]
+      : messages;
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        "Authorization": `Bearer ${key.trim()}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://wrytofftax.vercel.app",
-        "X-Title": "Wrytoff"
+        Authorization: `Bearer ${key.trim()}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://wrytofftax.vercel.app',
+        'X-Title': 'Wrytoff',
       },
       body: JSON.stringify({
-        model: process.env.VITE_OPENROUTER_MODEL || process.env.OPENROUTER_MODEL || model || "openai/gpt-5.4-nano",
+        model: model || defaultModel,
         messages: openRouterMessages,
-      })
+      }),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
-      return new Response(JSON.stringify({ error: data.error?.message || 'OpenRouter Error' }), { status: response.status });
+      return res.status(response.status).json({
+        error: data?.error?.message || 'OpenRouter Error',
+        upstreamStatus: response.status,
+        upstream: data,
+      });
     }
 
-    return new Response(JSON.stringify({ content: data.choices[0].message.content }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
+    return res.status(200).json({
+      content: data?.choices?.[0]?.message?.content || '',
     });
   } catch (error) {
-    console.error("Chat API Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    console.error('Chat API Error:', error);
+    return res.status(500).json({
+      error: error.message || 'Internal server error',
+    });
   }
 }
