@@ -146,7 +146,7 @@ function calcAnnualized(amount, frequency) {
 }
 
 function calcDeductible(e) {
-  const base = parseFloat(e.annualizedAmount) || parseFloat(e.amount) || 0;
+  const base = e.annualizedAmount ?? e.amount ?? 0;
   if (e.category === "Meals & Entertainment") return base * 0.50;
   const bPct = parseFloat(e.bizPct ?? 1.0);
   return base * bPct;
@@ -429,8 +429,9 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   const updateExp = useCallback((id, field, val) => {
     setExpenses(prev => prev.map(e => {
       if (e.id !== id) return e;
-      const updated = { ...e, [field]: (field === "bizPct" || field === "inputAmount") ? parseFloat(val) || 0 : val };
-      const inputAmount = updated.inputAmount || updated.amount || 0;
+      const updated = { ...e, [field]: (field === "bizPct" || field === "inputAmount") ? (parseFloat(val) || 0) : val };
+      if (field === "inputAmount") updated.amount = updated.inputAmount;
+      const inputAmount = updated.inputAmount ?? updated.amount ?? 0;
       updated.annualizedAmount = calcAnnualized(inputAmount, updated.frequency || "annual");
       if (updated.frequency) updated.status = "Likely Deductible";
       return updated;
@@ -575,7 +576,9 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
               <div style={{ fontSize: "13px", color: t.textDim }}>Managing all business outlays for {companyName}.</div>
               <div style={{ display: "flex", gap: "10px" }}>
+                <input type="file" accept=".csv" ref={fileInputRef} style={{ display: "none" }} onChange={handleImportCSV} />
                 <button onClick={() => setShowAddModal(true)} style={{ background: t.green, color: "#fff", border: "none", borderRadius: "8px", padding: "8px 16px", fontWeight: "600", cursor: "pointer" }}>+ Add Expense</button>
+                <button onClick={() => fileInputRef.current?.click()} style={{ background: t.surface, border: `1px solid ${t.border2}`, borderRadius: "8px", padding: "8px 16px", fontSize: "12px", cursor: "pointer" }}>Import CSV</button>
                 <button onClick={handleExportCSV} style={{ background: t.surface, border: `1px solid ${t.border2}`, borderRadius: "8px", padding: "8px 16px", fontSize: "12px", cursor: "pointer" }}>Export CSV</button>
               </div>
             </div>
