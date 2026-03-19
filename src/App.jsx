@@ -133,27 +133,8 @@ const ALL_CATEGORY_NAMES = Object.keys(IRS_LIBRARY);
 // ─────────────────────────────────────────────
 // INITIAL DATA
 // ─────────────────────────────────────────────
-const INITIAL_EXPENSES = [
-  { id: 1, vendor: "Anthropic", category: "Software & Subscriptions", amount: 20, bizPct: 1.00 },
-  { id: 2, vendor: "YouTube Premium", category: "Software & Subscriptions", amount: 20, bizPct: 1.00 },
-  { id: 3, vendor: "Gemini", category: "Software & Subscriptions", amount: 20, bizPct: 1.00 },
-  { id: 4, vendor: "ChatGPT", category: "Software & Subscriptions", amount: 20, bizPct: 1.00 },
-  { id: 5, vendor: "Apple iCloud", category: "Software & Subscriptions", amount: 32, bizPct: 1.00 },
-  { id: 6, vendor: "Cursor", category: "Software & Subscriptions", amount: 40, bizPct: 1.00 },
-  { id: 7, vendor: "WiFi", category: "Utilities", amount: 70, bizPct: 0.70 },
-  { id: 8, vendor: "Google Hosting", category: "Software & Subscriptions", amount: 30, bizPct: 1.00 },
-  { id: 9, vendor: "GoDaddy", category: "Software & Subscriptions", amount: 50, bizPct: 1.00 },
-  { id: 10, vendor: "Phone", category: "Utilities", amount: 120, bizPct: 0.80 },
-  { id: 11, vendor: "Electricity", category: "Utilities", amount: 300, bizPct: 0.05 },
-  { id: 12, vendor: "Water", category: "Utilities", amount: 400, bizPct: 0.05 },
-  { id: 13, vendor: "Client Meals", category: "Meals & Entertainment", amount: 5000, bizPct: 0.50 },
-  { id: 14, vendor: "Uber", category: "Travel & Transportation", amount: 200, bizPct: 1.00 },
-  { id: 15, vendor: "OpenRouter", category: "Software & Subscriptions", amount: 42, bizPct: 1.00 },
-];
-const INITIAL_ASSETS = [
-  { id: 1, item: "MacBook Pro", cost: 1200, method: "Section 179" },
-  { id: 2, item: "Keyboard", cost: 50, method: "Expense" },
-];
+const INITIAL_EXPENSES = [];
+const INITIAL_ASSETS = [];
 
 function getIrsRule(category, vendor) {
   const group = IRS_LIBRARY[category];
@@ -1081,7 +1062,8 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               )}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
                 <div style={{ fontSize: "13px", color: t.textDim }}>
-                  At your {pct(calc.marginal)} bracket, every $1K deducted saves ~{fmt(calc.marginal * 1000)}.
+                  At your {pct(calc.marginal)} bracket, every $1K deducted saves ~{fmt(calc.marginal * 1000)}. 
+                  <span onClick={() => { if(confirm("Clear all data?")) { setExpenses([]); setAssets([]); setW2Income(0); setSpouseIncome(0); setW2Withheld(0); setSpouseWithheld(0); setBizIncome(0); setHomeOfficeDed(0); } }} style={{ marginLeft: "12px", color: t.red, cursor: "pointer", textDecoration: "underline", fontSize: "11px" }}>Clear all entries</span>
                 </div>
                 <div style={{ display: "flex", gap: "10px" }}>
                   <input type="file" accept=".csv" ref={fileInputRef} style={{ display: "none" }} onChange={handleImportCSV} />
