@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   }
 
   const key = process.env.OPENROUTER_API_KEY;
-  const defaultModel = process.env.OPENROUTER_MODEL || 'openai/gpt-5.4-nano';
+  const defaultModel = process.env.OPENROUTER_MODEL || 'google/gemini-flash-1.5';
 
   if (!key) {
     return res.status(500).json({

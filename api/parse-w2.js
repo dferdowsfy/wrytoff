@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   }
 
   const key = process.env.OPENROUTER_API_KEY;
-  const defaultModel = process.env.OPENROUTER_MODEL || 'openai/gpt-5.4-nano';
+  const defaultModel = process.env.OPENROUTER_MODEL || 'google/gemini-flash-1.5';
 
   if (!key) {
     return res.status(500).json({
@@ -25,8 +25,9 @@ export default async function handler(req, res) {
         if (block.type === "image" && block.source?.type === "base64") {
           return { type: "image_url", image_url: { url: `data:${block.source.media_type};base64,${block.source.data}` } };
         }
-        if (block.type === "document") {
-          return { type: "image_url", image_url: { url: `data:${block.source.media_type};base64,${block.source.data}` } };
+        if (block.type === "document" && block.source?.type === "base64") {
+          // Send as document block for models like Claude 3.5 or Gemini that support it natively
+          return { type: "document", source: { type: "base64", media_type: block.source.media_type, data: block.source.data } };
         }
         return { type: "text", text: block.text };
       }) : msg.content

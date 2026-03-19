@@ -526,13 +526,18 @@ function W2Uploader({ onParsed, t }) {
 
       const resp = await fetch("/api/parse-w2", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "openai/gpt-5.4-nano", messages: [{ role: "user", content }] }),
+        body: JSON.stringify({ messages: [{ role: "user", content }] }),
       });
       const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Upload failed");
       const raw = typeof data.content === "string" ? data.content : (Array.isArray(data.content) ? data.content.find(b => b.type === "text")?.text : "") || "";
       const result = JSON.parse(raw.replace(/```json|```/g, "").trim());
       setParsed(result); onParsed(result); setStatus("done");
-    } catch (err) { console.error(err); setStatus("error"); }
+    } catch (err) { 
+      console.error("W-2 Parse Error:", err); 
+      setStatus("error"); 
+      alert(err.message || "Failed to read W-2. Try a high-quality image or PDF.");
+    }
   };
 
   const borderColor = dragging ? t.uploadDragBorder : status === "done" ? t.green : status === "error" ? t.red : t.uploadBorder;
