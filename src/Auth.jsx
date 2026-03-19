@@ -197,56 +197,60 @@ export default function AuthGuard() {
 // ──────────────────────────────────────────────────────────────────────────────
 function LandingScrollytelling({ onLogin, onSignUp }) {
   const [step, setStep] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           setStep(parseInt(entry.target.getAttribute('data-step')));
         }
       });
-    }, { threshold: 0.6 });
+    }, { threshold: isMobile ? 0.3 : 0.6 });
 
     document.querySelectorAll('.scroll-step').forEach(s => observer.observe(s));
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+    };
+  }, [isMobile]);
 
   return (
     <div style={{ background: '#f8fafc', color: '#0f172a', fontFamily: "'Inter', sans-serif" }}>
       {/* Fixed Nav */}
-      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, padding: '24px 80px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 1000, background: 'rgba(248,250,252,0.8)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #e2e8f0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, padding: isMobile ? '16px 20px' : '24px 80px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 1000, background: 'rgba(248,250,252,0.8)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #e2e8f0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2L3.5 7V17L12 22L20.5 17V7L12 2Z" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M3.5 7L12 12L20.5 7" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <span style={{ fontSize: '20px', fontWeight: '800', letterSpacing: '-0.5px' }}>Wrytoff</span>
+          <span style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '800', letterSpacing: '-0.5px' }}>Wrytoff</span>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button onClick={onLogin} style={{ background: 'none', border: 'none', padding: '8px 20px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', color: '#475569' }}>Login</button>
-          <button onClick={onSignUp} style={{ background: '#0f172a', color: '#fff', padding: '10px 24px', borderRadius: '10px', fontSize: '14px', fontWeight: '600', border: 'none', cursor: 'pointer' }}>Get Started</button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={onLogin} style={{ background: 'none', border: 'none', padding: '8px 12px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', color: '#475569' }}>Login</button>
+          <button onClick={onSignUp} style={{ background: '#0f172a', color: '#fff', padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', border: 'none', cursor: 'pointer' }}>Get Started</button>
         </div>
       </nav>
 
-      <div style={{ display: 'flex', maxWidth: '1400px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column-reverse' : 'row', maxWidth: '1400px', margin: '0 auto' }}>
         {/* LEFT COLUMN: SCROLLING STORY */}
-        <div style={{ flex: 1, padding: '0 80px' }}>
-          <section className="scroll-step" data-step="0" style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <h1 style={{ fontSize: '72px', fontWeight: '900', lineHeight: '1', letterSpacing: '-3px', marginBottom: '24px' }}>
+        <div style={{ flex: 1, padding: isMobile ? '0 24px' : '0 80px' }}>
+          <section className="scroll-step" data-step="0" style={{ height: isMobile ? '80vh' : '100vh', display: 'flex', flexDirection: 'column', justifyContent: isMobile ? 'flex-start' : 'center', paddingTop: isMobile ? '80px' : '0' }}>
+            <h1 style={{ fontSize: isMobile ? '44px' : '72px', fontWeight: '900', lineHeight: '1.1', letterSpacing: isMobile ? '-1.5px' : '-3px', marginBottom: '24px' }}>
               Optimize your <br/><span style={{ color: '#2563eb' }}>tax refund</span> <br/>with AI
             </h1>
-            <p style={{ fontSize: '20px', color: '#475569', lineHeight: '1.6', maxWidth: '440px' }}>
+            <p style={{ fontSize: isMobile ? '18px' : '20px', color: '#475569', lineHeight: '1.6', maxWidth: '440px' }}>
               Wrytoff bridges the gap between your raw data and IRS-ready optimizations through simple conversation.
             </p>
-            <div style={{ marginTop: '40px', display: 'flex', gap: '10px' }}>
-              <div style={{ width: '40px', height: '4px', background: '#2563eb', borderRadius: '2px' }} />
-              <div style={{ width: '20px', height: '4px', background: '#e2e8f0', borderRadius: '2px' }} />
-            </div>
           </section>
 
           <section className="scroll-step" data-step="1" style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ color: '#2563eb', fontWeight: '800', fontSize: '12px', letterSpacing: '2px', marginBottom: '16px' }}>STEP 01</div>
-            <h2 style={{ fontSize: '48px', fontWeight: '800', letterSpacing: '-2px', marginBottom: '20px' }}>Update via chat</h2>
+            <h2 style={{ fontSize: isMobile ? '36px' : '48px', fontWeight: '800', letterSpacing: '-1.5px', marginBottom: '20px' }}>Update via chat</h2>
             <p style={{ fontSize: '18px', color: '#475569', lineHeight: '1.6', maxWidth: '440px' }}>
               Just tell Wrytoff what changed. No forms, no complicated spreadsheets. Type like you talk.
             </p>
@@ -254,36 +258,36 @@ function LandingScrollytelling({ onLogin, onSignUp }) {
 
           <section className="scroll-step" data-step="2" style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ color: '#2563eb', fontWeight: '800', fontSize: '12px', letterSpacing: '2px', marginBottom: '16px' }}>STEP 02</div>
-            <h2 style={{ fontSize: '48px', fontWeight: '800', letterSpacing: '-2px', marginBottom: '20px' }}>Real-time sync</h2>
+            <h2 style={{ fontSize: isMobile ? '36px' : '48px', fontWeight: '800', letterSpacing: '-1.5px', marginBottom: '20px' }}>Real-time sync</h2>
             <p style={{ fontSize: '18px', color: '#475569', lineHeight: '1.6', maxWidth: '440px' }}>
-              Watch as Wrytoff parses your request and updates the dashboard fields instantly, annualizing expenses automatically.
+              Watch as Wrytoff parses your request and updates fields instantly.
             </p>
           </section>
 
           <section className="scroll-step" data-step="3" style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ color: '#2563eb', fontWeight: '800', fontSize: '12px', letterSpacing: '2px', marginBottom: '16px' }}>STEP 03</div>
-            <h2 style={{ fontSize: '48px', fontWeight: '800', letterSpacing: '-2px', marginBottom: '20px' }}>Live impact</h2>
+            <h2 style={{ fontSize: isMobile ? '36px' : '48px', fontWeight: '800', letterSpacing: '-1.5px', marginBottom: '20px' }}>Live impact</h2>
             <p style={{ fontSize: '18px', color: '#475569', lineHeight: '1.6', maxWidth: '440px' }}>
-              The refund engine recalculates your liability in milliseconds, showing the exact tax impact of every deduction.
+              The engine recalculates your liability in milliseconds, showing the exact tax impact.
             </p>
           </section>
 
           <section className="scroll-step" data-step="4" style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ color: '#2563eb', fontWeight: '800', fontSize: '12px', letterSpacing: '2px', marginBottom: '16px' }}>STEP 04</div>
-            <h2 style={{ fontSize: '48px', fontWeight: '800', letterSpacing: '-2px', marginBottom: '20px' }}>Optimization AI</h2>
+            <h2 style={{ fontSize: isMobile ? '36px' : '48px', fontWeight: '800', letterSpacing: '-1.5px', marginBottom: '20px' }}>Optimization AI</h2>
             <p style={{ fontSize: '18px', color: '#475569', lineHeight: '1.6', maxWidth: '440px' }}>
-              Wrytoff doesn't just record data—it scans for opportunities like SEP-IRA contributions and home office missed flags.
+              Wrytoff scans for every opportunity to maximize your refund.
             </p>
-            <button onClick={onSignUp} style={{ alignSelf: 'flex-start', background: '#2563eb', color: '#fff', padding: '16px 36px', borderRadius: '12px', fontSize: '16px', fontWeight: '700', border: 'none', cursor: 'pointer', marginTop: '40px', boxShadow: '0 10px 20px -5px rgba(37,99,235,0.4)' }}>
-              Maximize Your Savings Now
+            <button onClick={onSignUp} style={{ alignSelf: 'flex-start', background: '#2563eb', color: '#fff', padding: '16px 36px', borderRadius: '12px', fontSize: '16px', fontWeight: '700', border: 'none', cursor: 'pointer', marginTop: '40px' }}>
+              Maximize Savings
             </button>
           </section>
         </div>
 
         {/* RIGHT COLUMN: STICKY PRODUCT INTERFACE */}
-        <div style={{ flex: 1.2, position: 'relative' }}>
-          <div style={{ position: 'sticky', top: '15vh', height: '70vh', display: 'flex', alignItems: 'center' }}>
-            <StickyDashboard step={step} />
+        <div style={{ flex: 1.2, position: isMobile ? 'sticky' : 'relative', top: isMobile ? '60px' : '0', zIndex: 10, background: isMobile ? '#f8fafc' : 'transparent' }}>
+          <div style={{ position: 'sticky', top: isMobile ? '0' : '15vh', height: isMobile ? '35vh' : '70vh', display: 'flex', alignItems: 'center', padding: isMobile ? '20px 0' : '0' }}>
+            <StickyDashboard step={step} isMobile={isMobile} />
           </div>
         </div>
       </div>
@@ -293,57 +297,60 @@ function LandingScrollytelling({ onLogin, onSignUp }) {
   );
 }
 
-function StickyDashboard({ step }) {
+function StickyDashboard({ step, isMobile }) {
   const refundValue = step >= 3 ? 15410 : 14580;
   const homeOfficeVal = step >= 2 ? '$3,600/yr' : '—';
   const wifiVal = step >= 2 ? '70%' : '10%';
   
   return (
-    <div style={{ width: '100%', perspective: '1200px' }}>
+    <div style={{ width: '100%', perspective: '1200px', transform: isMobile ? 'scale(0.8)' : 'none' }}>
       <div style={{ 
-        background: '#fff', borderRadius: '32px', border: '1px solid #e2e8f0', 
+        background: '#fff', borderRadius: isMobile ? '24px' : '32px', border: '1px solid #e2e8f0', 
         boxShadow: '0 40px 100px -20px rgba(0,0,0,0.12)', 
         overflow: 'hidden', padding: '0',
-        transform: `rotateY(-5deg) rotateX(2deg) translateY(${step === 0 ? '20px' : '0'})`,
-        opacity: step === 0 ? 0.7 : 1,
-        transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)'
+        transform: isMobile ? 'none' : `rotateY(-5deg) rotateX(2deg) translateY(${step === 0 ? '20px' : '0'})`,
+        opacity: step === 0 && !isMobile ? 0.7 : 1,
+        transition: 'all 0.8s'
       }}>
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '6px', background: '#f8fafc' }}>
-          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f5733' }} />
-          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ffbd2e33' }} />
-          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#28c84033' }} />
+        {/* Browser Top Bar */}
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '6px', background: '#f8fafc' }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ff5f5733' }} />
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffbd2e33' }} />
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#28c84033' }} />
         </div>
 
-        <div style={{ padding: '48px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' }}>
+        <div style={{ padding: isMobile ? '24px' : '48px' }}>
+          {/* Dashboard Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isMobile ? '24px' : '40px' }}>
             <div>
-              <div style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', letterSpacing: '1px', marginBottom: '8px' }}>ESTIMATED POSITION</div>
-              <div style={{ fontSize: '56px', fontWeight: '900', color: '#0f172a', letterSpacing: '-2px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8', letterSpacing: '1px', marginBottom: '6px' }}>ESTIMATED POSITION</div>
+              <div style={{ fontSize: isMobile ? '32px' : '56px', fontWeight: '900', color: '#0f172a', letterSpacing: '-2px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 ${refundValue.toLocaleString()}
                 <div style={{ 
-                  fontSize: '18px', background: '#10b981', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontWeight: '700',
+                  fontSize: isMobile ? '13px' : '18px', background: '#10b981', color: '#fff', padding: '2px 8px', borderRadius: '20px', fontWeight: '700',
                   opacity: step === 3 ? 1 : 0, transform: step === 3 ? 'scale(1)' : 'scale(0.8)', transition: 'all 0.5s'
                 }}>+$830</div>
               </div>
             </div>
           </div>
 
-          <div style={{ border: '1px solid #f1f5f9', borderRadius: '16px', overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+          {/* Table */}
+          <div style={{ border: '1px solid #f1f5f9', borderRadius: '12px', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: isMobile ? '12px' : '13px' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>VENDOR</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>VALUE</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '600' }}>VENDOR</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '600' }}>VALUE</th>
                 </tr>
               </thead>
               <tbody>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '12px 16px', color: '#64748b' }}>Home Office</td>
-                  <td style={{ padding: '12px 16px', fontWeight: '700', color: step >= 2 ? '#2563eb' : '#94a3b8', transition: 'color 0.4s' }}>{homeOfficeVal}</td>
+                  <td style={{ padding: '8px 12px', color: '#64748b' }}>Home Office</td>
+                  <td style={{ padding: '8px 12px', fontWeight: '700', color: step >= 2 ? '#2563eb' : '#94a3b8' }}>{homeOfficeVal}</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '12px 16px', color: '#64748b' }}>Internet/WiFi (Biz %)</td>
-                  <td style={{ padding: '12px 16px', fontWeight: '700', color: step >= 2 ? '#2563eb' : '#94a3b8', transition: 'color 0.4s' }}>{wifiVal}</td>
+                  <td style={{ padding: '8px 12px', color: '#64748b' }}>WiFi (Biz %)</td>
+                  <td style={{ padding: '8px 12px', fontWeight: '700', color: step >= 2 ? '#2563eb' : '#94a3b8' }}>{wifiVal}</td>
                 </tr>
               </tbody>
             </table>
@@ -351,37 +358,34 @@ function StickyDashboard({ step }) {
         </div>
       </div>
 
+      {/* OVERLAY: CHAT (Step 1) */}
       <div style={{ 
-        position: 'absolute', top: '50%', left: '-80px', width: '300px', 
+        position: 'absolute', top: isMobile ? '20px' : '50%', left: isMobile ? '10px' : '-80px', width: isMobile ? '180px' : '300px', 
         background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', 
-        padding: '20px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+        padding: isMobile ? '12px' : '20px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
         opacity: step >= 1 ? 1 : 0, transform: step >= 1 ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        zIndex: 50
+        transition: 'all 0.4s', zIndex: 50
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>⚡</div>
-          <span style={{ fontSize: '12px', fontWeight: '800' }}>Wrytoff AI</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+          <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '10px' }}>⚡</div>
+          <span style={{ fontSize: '10px', fontWeight: '800' }}>Wrytoff AI</span>
         </div>
-        <div style={{ fontSize: '13px', background: '#f1f5f9', padding: '12px', borderRadius: '14px', lineHeight: '1.4' }}>
-          "Add my home office at $300/mo and set wifi to 70% biz use"
+        <div style={{ fontSize: isMobile ? '11px' : '13px', background: '#f1f5f9', padding: '10px', borderRadius: '12px', lineHeight: '1.4' }}>
+          "Add my home office..."
         </div>
       </div>
 
+      {/* OVERLAY: OPTIMIZATION (Step 4) */}
       <div style={{ 
-        position: 'absolute', top: '20px', right: '-40px', width: '280px', 
-        background: '#0f172a', borderRadius: '20px', color: '#fff',
-        padding: '24px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
+        position: 'absolute', bottom: isMobile ? '-20px' : '20px', right: isMobile ? '10px' : '-40px', width: isMobile ? '160px' : '280px', 
+        background: '#0f172a', borderRadius: '16px', color: '#fff',
+        padding: isMobile ? '16px' : '24px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
         opacity: step >= 4 ? 1 : 0, transform: step >= 4 ? 'scale(1)' : 'scale(0.9)',
-        transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        zIndex: 51
+        transition: 'all 0.4s', zIndex: 51
       }}>
-        <div style={{ color: '#10b981', fontSize: '11px', fontWeight: '800', letterSpacing: '1px', marginBottom: '8px' }}>OPTIMIZATION DETECTED</div>
-        <div style={{ fontSize: '15px', fontWeight: '600', marginBottom: '12px' }}>SEP-IRA Contribution</div>
-        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ fontSize: '11px', color: '#94a3b8' }}>Potental Refund Increase</div>
-          <div style={{ fontSize: '18px', fontWeight: '800', color: '#10b981' }}>+$1,200</div>
-        </div>
+        <div style={{ color: '#10b981', fontSize: '9px', fontWeight: '800', letterSpacing: '1px', marginBottom: '4px' }}>SAVINGS</div>
+        <div style={{ fontSize: isMobile ? '12px' : '15px', fontWeight: '600' }}>SEP-IRA</div>
+        <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: '800', color: '#10b981' }}>+$1,200</div>
       </div>
     </div>
   );
