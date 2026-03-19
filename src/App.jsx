@@ -552,7 +552,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
     }, {});
 
     return { totalIncome: totalW2 + bizIncome, totalBizDed, netSE, seTax, seDed, agi, stdDed, qbiDed, taxable, fedTax, marginal, withheld, liability, position, catTotals, isRefund: position >= 0 };
-  }, [expenses, bizIncome, w2Income, spouseIncome, w2Withheld, spouseWithheld, homeOfficeDed, scenario.filingStatus]);
+  }, [expenses, bizIncome, w2Income, spouseIncome, w2Withheld, spouseWithheld, homeOfficeDed, scenario]);
 
   const catTotals = calc.catTotals;
   const isRefund = calc.isRefund;
@@ -613,8 +613,34 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
             if (!res.ok) throw new Error(data.error || "API error");
 
             if (data.content) {
-              const cleanJson = data.content.match(/\{[\s\S]*\}/)?.[0];
-              const parsed = JSON.parse(cleanJson);
+              // Robust JSON extraction — vision models may wrap output in code fences or add prose
+              let parsed = null;
+              const c = data.content;
+
+              // 1. Direct parse
+              try { parsed = JSON.parse(c.trim()); } catch (_) {}
+
+              // 2. Strip ```json ... ``` code fences
+              if (!parsed) {
+                const fence = c.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (fence) try { parsed = JSON.parse(fence[1].trim()); } catch (_) {}
+              }
+
+              // 3. Balanced-brace walk — finds outermost {...}
+              if (!parsed) {
+                const start = c.indexOf("{");
+                if (start !== -1) {
+                  let depth = 0, end = -1;
+                  for (let i = start; i < c.length; i++) {
+                    if (c[i] === "{") depth++;
+                    else if (c[i] === "}") { depth--; if (depth === 0) { end = i; break; } }
+                  }
+                  if (end !== -1) try { parsed = JSON.parse(c.slice(start, end + 1)); } catch (_) {}
+                }
+              }
+
+              if (!parsed) throw new Error("Could not parse W-2 fields from AI response");
+
               if (parsed.wages) setW2Income(parsed.wages);
               if (parsed.federalWithholding) setW2Withheld(parsed.federalWithholding);
               if (parsed.employerName) setEmployerName(parsed.employerName);
@@ -932,14 +958,18 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
   }, [ctx]);
 
   // If AI scan returned a ranking, reorder topOpps by AI's rankedIds; otherwise fall back to score sort
-  const baseTopOpps = ranking.filter(o => o.applies && !o.advanced).sort((a, b) => b.aiScore - a.aiScore);
   const topOpps = useMemo(() => {
-    if (!aiInsights?.rankedIds?.length) return baseTopOpps;
+    const base = ranking
+      .filter(o => o.applies && !o.advanced)
+      .sort((a, b) => b.aiScore - a.aiScore);
+    if (!aiInsights?.rankedIds?.length) return base;
     const aiOrder = aiInsights.rankedIds;
-    const inAiOrder = baseTopOpps.filter(o => aiOrder.includes(o.id)).sort((a, b) => aiOrder.indexOf(a.id) - aiOrder.indexOf(b.id));
-    const notInAiOrder = baseTopOpps.filter(o => !aiOrder.includes(o.id));
+    const inAiOrder = base
+      .filter(o => aiOrder.includes(o.id))
+      .sort((a, b) => aiOrder.indexOf(a.id) - aiOrder.indexOf(b.id));
+    const notInAiOrder = base.filter(o => !aiOrder.includes(o.id));
     return [...inAiOrder, ...notInAiOrder];
-  }, [baseTopOpps, aiInsights]);
+  }, [ranking, aiInsights]);
 
   const secondaryOppsArr = ranking.filter(o => !o.applies && !o.advanced);
   const advancedOppsArr = ranking.filter(o => o.advanced);
@@ -1380,7 +1410,8 @@ Only include an actions block when the user explicitly asks to add or change dat
                   <button
                     key={s}
                     onClick={() => sendMessage(s)}
-                    style={{ background: t.bg, border: `1px solid ${t.border2}`, borderRadius: "8px", padding: "7px 11px", fontSize: "12px", color: t.blue, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}
+                    disabled={loading}
+                    style={{ background: t.bg, border: `1px solid ${t.border2}`, borderRadius: "8px", padding: "7px 11px", fontSize: "12px", color: t.blue, cursor: loading ? "default" : "pointer", textAlign: "left", fontFamily: "inherit", opacity: loading ? 0.5 : 1 }}
                   >
                     {s}
                   </button>
