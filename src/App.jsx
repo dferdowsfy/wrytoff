@@ -6,6 +6,7 @@ import { doc, setDoc } from 'firebase/firestore';
 // 2026 TAX CONSTANTS
 // ─────────────────────────────────────────────
 const STANDARD_DEDUCTION_MFJ = 30000;
+const STANDARD_DEDUCTION_SINGLE = 15000;
 const QBI_RATE = 0.20;
 const QBI_THRESHOLD_MFJ = 394600;
 const MFJ_BRACKETS = [
@@ -587,7 +588,13 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   const [spouseWithheld, setSpouseWithheld] = useState(0);
   const [bizIncome, setBizIncome] = useState(0);
   const [homeOfficeDed, setHomeOfficeDed] = useState(0);
-  const [scenario, setScenario] = useState({ posture: "Standard", sepIra: 0, healthIns: 0, mileage: 0 });
+  const [scenario, setScenario] = useState({ 
+    posture: "Standard", 
+    sepIra: 0, 
+    healthIns: 0, 
+    mileage: 0,
+    filingStatus: "None"
+  });
   const [activeTab, setActiveTab] = useState("summary");
   const [showAddModal, setShowAddModal] = useState(false);
   const [expandedRow, setExpandedRow] = useState(null);
@@ -721,7 +728,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
     const totalIncome = w2Income + spouseIncome + bizIncome;
     const agi = totalIncome - seDed - extraAGIDed;
     const qbiDed = (agi <= QBI_THRESHOLD_MFJ && netSE > 0) ? netSE * QBI_RATE : 0;
-    const stdDed = STANDARD_DEDUCTION_MFJ;
+    const stdDed = scenario.filingStatus === "MFJ" ? STANDARD_DEDUCTION_MFJ : (scenario.filingStatus === "Single" ? STANDARD_DEDUCTION_SINGLE : 0);
     const taxable = Math.max(0, agi - stdDed - qbiDed);
     const fedTax = calcFederalTax(taxable);
     const marginal = marginalRate(taxable);
@@ -1194,7 +1201,21 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
         {/* ── INCOME ── */}
         {activeTab === "income" && (
           <div>
-            <div style={{ fontSize: "13px", color: t.textDim, marginBottom: "18px" }}>All figures flow into your joint 1040. Upload your wife's W-2 to auto-fill Box 1 & Box 2.</div>
+            <div style={{ fontSize: "13px", color: t.textDim, marginBottom: "18px" }}>Customize your filing status and income types here.</div>
+            
+            <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, marginBottom: "10px", letterSpacing: "0.5px" }}>FILING STATUS (IRS)</div>
+            <div style={{ padding: "14px 18px", background: t.surface, borderRadius: "12px", border: `1px solid ${t.border}`, marginBottom: "20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ fontSize: "13px", fontWeight: "600", color: t.text }}>Standard Deduction</div>
+                <div style={{ fontSize: "12px", color: t.textDim }}>Set your automatic base deduction.</div>
+              </div>
+              <select value={scenario.filingStatus} onChange={e => setScenario(prev => ({ ...prev, filingStatus: e.target.value }))} style={inp({ width: "180px", fontSize: "12px" })}>
+                <option value="None">None ($0)</option>
+                <option value="Single">Single ($15,000)</option>
+                <option value="MFJ">Married Filing Jointly ($30,000)</option>
+              </select>
+            </div>
+
             <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, marginBottom: "10px", letterSpacing: "0.5px" }}>YOUR W-2</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: "12px", marginBottom: "20px" }}>
               {[{ label: "Wages (Box 1)", value: w2Income, set: setW2Income, desc: "Gross wages from your employer" }, { label: "Federal withheld (Box 2)", value: w2Withheld, set: setW2Withheld, desc: "From Box 2 of your W-2" }].map(f => (
@@ -1206,7 +1227,6 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               ))}
             </div>
             <W2Uploader onParsed={handleMyW2} t={t} />
-            <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, marginBottom: "10px", letterSpacing: "0.5px" }}>SPOUSE W-2</div>
             <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, marginBottom: "10px", letterSpacing: "0.5px", marginTop: "24px" }}>SPOUSE W-2</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: "12px", marginBottom: "20px" }}>
               {[{ label: "Spouse wages (Box 1)", value: spouseIncome, set: setSpouseIncome, desc: "Auto-filled from W-2 upload below" }, { label: "Spouse withheld (Box 2)", value: spouseWithheld, set: setSpouseWithheld, desc: "Auto-filled from W-2 upload below" }].map(f => (
@@ -1218,7 +1238,6 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               ))}
             </div>
             <W2Uploader onParsed={handleSpouseW2} t={t} />
-            <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, margin: "20px 0 10px", letterSpacing: "0.5px" }}>{companyName.toUpperCase()} REVENUE</div>
             <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, margin: "24px 0 10px", letterSpacing: "0.5px" }}>{companyName.toUpperCase()} REVENUE</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: "12px" }}>
               {[{ label: `${companyName} gross revenue`, value: bizIncome, set: setBizIncome, desc: "Total gross receipts/sales" }, { label: "Home office deduction", value: homeOfficeDed, set: setHomeOfficeDed, desc: "Mortgage/rent portion for home office" }].map(f => (
