@@ -70,7 +70,7 @@ export default function AuthGuard() {
     setError('');
     setAuthLoading(true);
     try {
-      const profile = {
+      const profileData = {
         uid: user.uid,
         email: user.email,
         companyName,
@@ -78,8 +78,8 @@ export default function AuthGuard() {
         onboardingCompleted: true,
         createdAt: new Date().toISOString()
       };
-      await setDoc(doc(db, 'users', user.uid), profile, { merge: true });
-      setUserProfile(profile);
+      await setDoc(doc(db, 'users', user.uid), profileData, { merge: true });
+      setUserProfile(prev => ({ ...prev, ...profileData }));
       setNeedsOnboarding(false);
     } catch (err) {
       setError('Failed to save profile: Check your Firebase API keys & rules.');

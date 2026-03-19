@@ -600,6 +600,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
 
   const td = userProfile?.taxData || {};
   const [expenses, setExpenses] = useState(td.expenses || []);
+  const [assets, setAssets] = useState(td.assets || INITIAL_ASSETS);
   const [w2Income, setW2Income] = useState(td.w2Income || 0);
   const [spouseIncome, setSpouseIncome] = useState(td.spouseIncome || 0);
   const [w2Withheld, setW2Withheld] = useState(td.w2Withheld || 0);
@@ -618,15 +619,19 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
     const saveToCloud = async () => {
       try {
         await setDoc(doc(db, 'users', userProfile.uid), {
-          taxData: { expenses, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario }
+          taxData: { expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario }
         }, { merge: true });
+        console.log("Cloud auto-save successful");
       } catch (e) {
         console.error("Cloud auto-save failure:", e);
       }
     };
-    const syncTimer = setTimeout(saveToCloud, 2000);
-    return () => clearTimeout(syncTimer);
-  }, [expenses, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario, userProfile?.uid]);
+    const syncTimer = setTimeout(saveToCloud, 500); // Reduced delay for better reliability
+    return () => {
+        clearTimeout(syncTimer);
+        // Explicitly trigger a save on unmount if needed? 
+    };
+  }, [expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario, userProfile?.uid]);
 
   const flash = (fields) => {
     setFlashFields(fields);
@@ -686,6 +691,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
 
   const computeCalc = (extraOpts = {}) => {
     const expensesToUse = extraOpts.expenses || expenses;
+    const assetsToUse = extraOpts.assets || assets;
     const homeOfficeToUse = extraOpts.homeOfficeDed ?? homeOfficeDed;
     const extraBizDed = extraOpts.extraBizDed || 0;
     const extraAGIDed = extraOpts.extraAGIDed || 0;
@@ -694,7 +700,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
       acc[e.category] = (acc[e.category] || 0) + calcDeductible(e);
       return acc;
     }, {});
-    const equipDed = INITIAL_ASSETS.reduce((s, a) => s + a.cost, 0);
+    const equipDed = assetsToUse.reduce((s, a) => s + a.cost, 0);
     const totalBizDed = Object.values(expDed).reduce((a, b) => a + b, 0) + homeOfficeToUse + extraBizDed;
     const netSE = Math.max(0, bizIncome - totalBizDed);
     const seTax = netSE * 0.9235 * 0.153;
@@ -718,19 +724,20 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
 
   const calc = useMemo(() => computeCalc(), [expenses, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed]);
   const scenarioCalc = useMemo(() => computeCalc({
+    assets: assets,
     extraBizDed: (scenario.mileage || 0) * 0.70,
     extraAGIDed: (scenario.sepIra || 0) + (scenario.healthIns || 0),
-  }), [expenses, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario]);
+  }), [expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario]);
 
   const isRefund = calc.position >= 0;
 
   const catTotals = useMemo(() => {
     const totals = {};
     for (const e of expenses) totals[e.category] = (totals[e.category] || 0) + calcDeductible(e);
-    totals["Equipment"] = INITIAL_ASSETS.reduce((s, a) => s + a.cost, 0);
+    totals["Equipment"] = assets.reduce((s, a) => s + a.cost, 0);
     totals["Home Office Mortgage"] = homeOfficeDed;
     return totals;
-  }, [expenses, homeOfficeDed]);
+  }, [expenses, assets, homeOfficeDed]);
 
   const inp = (extra = {}) => ({ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: "6px", color: t.inputText, fontFamily: "'DM Mono',monospace", fontSize: "13px", padding: "7px 10px", outline: "none", ...extra });
   const bigInp = (extra = {}) => inp({ fontSize: "18px", fontWeight: "600", padding: "9px 12px", width: "100%", boxSizing: "border-box", ...extra });
@@ -1148,7 +1155,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
 
               <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", padding: "16px 20px", marginTop: "12px" }}>
                 <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, marginBottom: "10px", letterSpacing: "0.5px" }}>EQUIPMENT (SECTION 179 / EXPENSED)</div>
-                {INITIAL_ASSETS.map(a => (
+                {assets.map(a => (
                   <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "7px" }}>
                     <span style={{ color: t.text, flex: 1, fontSize: "13px" }}>{a.item}</span>
                     <span style={{ background: t.irsTagBg, color: t.irsTagText, border: `1px solid ${t.irsTagBorder}`, borderRadius: "4px", padding: "2px 8px", fontSize: "10px" }}>{a.method}</span>
