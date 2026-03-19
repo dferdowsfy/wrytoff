@@ -621,16 +621,13 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
         await setDoc(doc(db, 'users', userProfile.uid), {
           taxData: { expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario }
         }, { merge: true });
-        console.log("Cloud auto-save successful");
+        console.log("Cloud auto-save successful for " + userProfile.uid);
       } catch (e) {
         console.error("Cloud auto-save failure:", e);
       }
     };
-    const syncTimer = setTimeout(saveToCloud, 500); // Reduced delay for better reliability
-    return () => {
-        clearTimeout(syncTimer);
-        // Explicitly trigger a save on unmount if needed? 
-    };
+    const syncTimer = setTimeout(saveToCloud, 1000); 
+    return () => clearTimeout(syncTimer);
   }, [expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario, userProfile?.uid]);
 
   const flash = (fields) => {
@@ -650,11 +647,23 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
         case "SET_BIZ_INCOME": setBizIncome(action.value); fieldsChanged.bizIncome = true; break;
         case "SET_HOME_OFFICE": setHomeOfficeDed(action.value); fieldsChanged.homeOfficeDed = true; break;
         case "ADD_EXPENSE":
-          setExpenses(prev => [...prev, { id: nextId++, status: action.expense.status || "Likely Deductible", ...action.expense }]);
+          setExpenses(prev => [...prev, { id: Date.now() + Math.random(), status: action.expense.status || "Likely Deductible", ...action.expense }]);
           fieldsChanged.expenses = true;
           break;
         case "REMOVE_EXPENSE":
-          setExpenses(prev => prev.filter(e => e.vendor !== action.vendor));
+          setExpenses(prev => prev.filter(e => e.id !== action.id && e.vendor !== action.vendor));
+          break;
+        case "ADD_ASSET":
+          setAssets(prev => [...prev, { id: Date.now() + Math.random(), ...action.asset }]);
+          fieldsChanged.assets = true;
+          break;
+        case "UPDATE_ASSET":
+          setAssets(prev => prev.map(a => a.id === action.id ? { ...a, ...action.updates } : a));
+          fieldsChanged.assets = true;
+          break;
+        case "REMOVE_ASSET":
+          setAssets(prev => prev.filter(a => a.id !== action.id));
+          fieldsChanged.assets = true;
           break;
         case "NAVIGATE":
           setActiveTab(action.tab);
@@ -1154,13 +1163,22 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               </div>
 
               <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", padding: "16px 20px", marginTop: "12px" }}>
-                <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, marginBottom: "10px", letterSpacing: "0.5px" }}>EQUIPMENT (SECTION 179 / EXPENSED)</div>
+                <div style={{ fontSize: "11px", fontWeight: "600", color: t.textMuted, marginBottom: "10px", letterSpacing: "0.5px", display: "flex", justifyContent: "space-between" }}>
+                  <span>EQUIPMENT (SECTION 179 / EXPENSED)</span>
+                  <button onClick={() => setAssets(prev => [...prev, { id: Date.now(), item: "New item", cost: 0, method: "Expense" }])} style={{ background: "none", border: "none", color: t.blue, fontSize: "10px", cursor: "pointer" }}>+ Add Equipment</button>
+                </div>
                 {assets.map(a => (
                   <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "7px" }}>
-                    <span style={{ color: t.text, flex: 1, fontSize: "13px" }}>{a.item}</span>
-                    <span style={{ background: t.irsTagBg, color: t.irsTagText, border: `1px solid ${t.irsTagBorder}`, borderRadius: "4px", padding: "2px 8px", fontSize: "10px" }}>{a.method}</span>
-                    <span style={{ fontFamily: "'DM Mono',monospace", color: t.green, fontSize: "13px" }}>{fmt(a.cost)}</span>
-                    <span style={{ fontFamily: "'DM Mono',monospace", color: t.greenMid, fontSize: "12px" }}>~{fmt(a.cost * calc.marginal)}</span>
+                    <input value={a.item} onChange={ev => setAssets(prev => prev.map(asst => asst.id === a.id ? { ...asst, item: ev.target.value } : asst))} 
+                      style={{ background: "none", border: "none", color: t.text, flex: 1, fontSize: "13px", outline: "none" }} />
+                    <select value={a.method} onChange={ev => setAssets(prev => prev.map(asst => asst.id === a.id ? { ...asst, method: ev.target.value } : asst))}
+                      style={{ background: t.irsTagBg, color: t.irsTagText, border: `1px solid ${t.irsTagBorder}`, borderRadius: "4px", padding: "1px 4px", fontSize: "10px", outline: "none" }}>
+                      <option value="Section 179">Section 179</option>
+                      <option value="Expense">Expense</option>
+                    </select>
+                    <input type="number" value={a.cost} onChange={ev => setAssets(prev => prev.map(asst => asst.id === a.id ? { ...asst, cost: parseFloat(ev.target.value) || 0 } : asst))} 
+                      style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: "4px", color: t.green, width: "70px", fontSize: "13px", padding: "2px 5px", textAlign: "right", outline: "none" }} />
+                    <button onClick={() => setAssets(prev => prev.filter(asst => asst.id !== a.id))} style={{ background: "none", border: "none", color: t.red, fontSize: "12px", cursor: "pointer", padding: "0 5px" }}>×</button>
                   </div>
                 ))}
               </div>
