@@ -660,7 +660,16 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               <div style={{ display: "flex", gap: "10px" }}>
                 <input type="file" accept=".csv" ref={fileInputRef} style={{ display: "none" }} onChange={handleImportCSV} />
                 <button onClick={() => setShowAddModal(true)} style={{ background: t.green, color: "#fff", border: "none", borderRadius: "8px", padding: "8px 16px", fontWeight: "600", cursor: "pointer" }}>+ Add Expense</button>
-                <button onClick={() => { if(confirm("Clear all expenses?")) setExpenses([]); }} style={{ background: "none", border: `1px solid ${t.red}44`, color: t.red, borderRadius: "8px", padding: "8px 12px", fontSize: "11px", cursor: "pointer" }}>Clear All</button>
+                <button 
+                  onClick={() => { 
+                    if (window.confirm("Are you sure you want to clear all expenses? This will reset your current progress.")) {
+                      setExpenses([]); 
+                    }
+                  }} 
+                  style={{ background: "none", border: `1px solid ${t.red}44`, color: t.red, borderRadius: "8px", padding: "8px 12px", fontSize: "11px", cursor: "pointer", transition: "all 0.15s" }}
+                >
+                  Clear All
+                </button>
                 <button onClick={() => fileInputRef.current?.click()} style={{ background: t.surface, border: `1px solid ${t.border2}`, borderRadius: "8px", padding: "8px 16px", fontSize: "12px", cursor: "pointer" }}>Import CSV</button>
                 <button onClick={handleExportCSV} style={{ background: t.surface, border: `1px solid ${t.border2}`, borderRadius: "8px", padding: "8px 16px", fontSize: "12px", cursor: "pointer" }}>Export CSV</button>
               </div>
@@ -783,6 +792,15 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
   const secondaryOppsArr = ranking.filter(o => !o.applies && !o.advanced);
   const advancedOppsArr = ranking.filter(o => o.advanced);
   
+  const [selectedOppId, setSelectedOppId] = useState(null);
+  
+  useEffect(() => {
+    if (topOpps.length > 0 && !selectedOppId) {
+      setSelectedOppId(topOpps[0].id);
+    }
+  }, [topOpps, selectedOppId]);
+
+  const selectedOpp = topOpps.find(o => o.id === selectedOppId) || topOpps[0];
   const totalPotential = topOpps.reduce((s, o) => s + o.estSavings, 0);
 
   const triggerScan = () => {
@@ -798,8 +816,12 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .opp-card:hover { border-color: ${t.blue}66 !important; background: ${t.surface} !important; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.1); }
+        .opp-tab { cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid ${t.border}; outline: none; }
+        .opp-tab:hover { border-color: ${t.blue}66; scale: 1.02; }
+        .opp-tab.active { border-color: ${t.blue}; background: ${t.blue}08; box-shadow: 0 4px 12px ${t.blue}11; }
       `}</style>
 
+      {/* 1. TOP SUMMARY STRIP */}
       <div style={{ 
         background: `linear-gradient(135deg, ${t.blue}aa 0%, ${t.surface2} 100%)`, 
         border: `1px solid ${t.border}`, 
@@ -844,29 +866,58 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
         </div>
       </div>
 
-      {/* 2. RANKED OPPORTUNITY CARDS */}
+      {/* 2. RANKED OPPORTUNITY TABS */}
       <div style={{ marginBottom: "40px" }}>
         <h3 style={{ fontSize: "14px", fontWeight: "700", color: t.textDim, letterSpacing: "0.5px", marginBottom: "16px" }}>PRIORITY STRATEGIES</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}>
-          {topOpps.length > 0 ? topOpps.map(opp => (
+        
+        <div style={{ display: "flex", gap: "12px", marginBottom: "24px", overflowX: "auto", padding: "4px 4px 12px", scrollbarWidth: "none" }}>
+          {topOpps.length > 0 ? topOpps.map(opp => {
+            const isApplied = ctx.scenario[opp.field] > 0 || (opp.id === "home-office" && ctx.homeOfficeDed > 0);
+            const needsInfo = opp.check(ctx) && !isApplied;
+            return (
+              <div 
+                key={opp.id} 
+                onClick={() => setSelectedOppId(opp.id)}
+                className={`opp-tab ${selectedOppId === opp.id ? "active" : ""}`}
+                style={{ 
+                  flexShrink: 0, minWidth: "220px", background: t.surface, borderRadius: "12px", padding: "16px", textAlign: "left"
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "800", color: isApplied ? t.green : (needsInfo && selectedOppId !== opp.id ? t.amber : t.textDim) }}>
+                    {isApplied ? "APPLIED ✓" : (needsInfo ? "NEEDS INFO" : "STRATEGY")}
+                  </div>
+                  <div style={{ fontSize: "12px", fontWeight: "800", color: t.green }}>+{fmt(opp.estSavings)}</div>
+                </div>
+                <div style={{ fontSize: "15px", fontWeight: "700", color: t.text, marginBottom: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{opp.title}</div>
+                <div style={{ fontSize: "10px", color: t.textFaint, fontWeight: "600" }}>{opp.confidence.toUpperCase()} CONFIDENCE</div>
+              </div>
+            );
+          }) : (
+            <div style={{ padding: "40px", textAlign: "center", background: t.surface, border: `1px dashed ${t.border}`, borderRadius: "12px", color: t.textDim, width: "100%" }}>
+              No high-impact opportunities remaining based on current data.
+            </div>
+          )}
+        </div>
+
+        {selectedOpp && (
+          <div style={{ transition: "all 0.3s ease-out", animation: "tabEnter 0.3s ease-out" }}>
+            <style>{` @keyframes tabEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } } `}</style>
             <OpportunityCard 
-              key={opp.id} 
+              key={selectedOpp.id} 
               t={t} 
-              opp={opp} 
-              onApply={(val) => onApply(opp, val)} 
-              onDismiss={() => onDismiss(opp.id)}
-              isActiveScenario={activeScenarioId === opp.id}
+              opp={selectedOpp} 
+              ctx={ctx}
+              onApply={(val) => onApply(selectedOpp, val)} 
+              onDismiss={() => onDismiss(selectedOpp.id)}
+              isActiveScenario={activeScenarioId === selectedOpp.id}
               setActiveScenarioId={setActiveScenarioId}
               tempValue={tempScenarioValue}
               setTempValue={setTempScenarioValue}
               fmt={fmt}
             />
-          )) : (
-            <div style={{ padding: "40px", textAlign: "center", background: t.surface, border: `1px dashed ${t.border}`, borderRadius: "12px", color: t.textDim }}>
-              No high-impact opportunities remaining based on current data.
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* 3. SECONDARY SECTIONS */}
@@ -897,8 +948,8 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
   );
 }
 
-function OpportunityCard({ t, opp, onApply, onDismiss, isActiveScenario, setActiveScenarioId, tempValue, setTempValue, fmt }) {
-  const isApplied = false; // TBD: check if field in scenario matches max or is > 0
+function OpportunityCard({ t, opp, ctx, onApply, onDismiss, isActiveScenario, setActiveScenarioId, tempValue, setTempValue, fmt }) {
+  const isApplied = ctx.scenario[opp.field] > 0 || (opp.id === "home-office" && ctx.homeOfficeDed > 0);
 
   return (
     <div className="opp-card" style={{ 
