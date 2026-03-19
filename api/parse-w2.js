@@ -1,4 +1,7 @@
-const NEMOTRON = 'nvidia/nemotron-3-super-120b-a12b:free';
+// W-2 parsing requires a vision-capable model.
+// Nemotron does NOT support image input — use OPENROUTER_VISION_MODEL env var.
+// Default: meta-llama/llama-3.2-11b-vision-instruct:free (free, vision-capable)
+// To change: set OPENROUTER_VISION_MODEL in Vercel environment variables.
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,37 +9,31 @@ export default async function handler(req, res) {
   }
 
   const key = process.env.OPENROUTER_API_KEY;
+  const visionModel =
+    process.env.OPENROUTER_VISION_MODEL || 'meta-llama/llama-3.2-11b-vision-instruct:free';
 
   if (!key) {
-    return res.status(500).json({
-      error: 'Server missing OPENROUTER_API_KEY',
-      debug: {
-        hasOpenRouterKey: false,
-        vercelEnv: process.env.VERCEL_ENV || 'unknown',
-      },
-    });
+    return res.status(500).json({ error: 'Server missing OPENROUTER_API_KEY' });
   }
 
   try {
     const { messages = [] } = req.body || {};
 
-    // Convert Anthropic-style multimodal payload to OpenAI/OpenRouter format.
-    // Nemotron supports image_url blocks; it does NOT support native document blocks.
+    // Convert Anthropic-style multimodal blocks to OpenAI image_url format.
+    // Both 'image' and 'document' blocks become image_url — vision models expect this.
     const openRouterMessages = messages.map(msg => ({
       role: msg.role,
       content: Array.isArray(msg.content)
         ? msg.content.map(block => {
-            if (block.type === 'image' && block.source?.type === 'base64') {
+            if (
+              (block.type === 'image' || block.type === 'document') &&
+              block.source?.type === 'base64'
+            ) {
               return {
                 type: 'image_url',
-                image_url: { url: `data:${block.source.media_type};base64,${block.source.data}` },
-              };
-            }
-            if (block.type === 'document' && block.source?.type === 'base64') {
-              // Nemotron does not support native document blocks — convert to image_url
-              return {
-                type: 'image_url',
-                image_url: { url: `data:${block.source.media_type};base64,${block.source.data}` },
+                image_url: {
+                  url: `data:${block.source.media_type};base64,${block.source.data}`,
+                },
               };
             }
             return { type: 'text', text: block.text || '' };
@@ -53,7 +50,7 @@ export default async function handler(req, res) {
         'X-Title': 'Wrytoff',
       },
       body: JSON.stringify({
-        model: NEMOTRON,
+        model: visionModel,
         messages: openRouterMessages,
       }),
     });
@@ -73,8 +70,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('W-2 Parse Error:', error);
-    return res.status(500).json({
-      error: error.message || 'Internal server error',
-    });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }

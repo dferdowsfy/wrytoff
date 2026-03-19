@@ -977,10 +977,13 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.rankedIds || data.topInsight) setAiInsights(data);
-      }
+      const data = await res.json().catch(() => ({}));
+      // Always set insights so the scan result is visible — even a topInsight fallback is useful
+      setAiInsights({
+        rankedIds: Array.isArray(data.rankedIds) ? data.rankedIds : [],
+        topInsight: data.topInsight || data.error || "Scan complete. Review the strategies below.",
+        insights: data.insights || {},
+      });
     } catch (err) {
       console.error("AI scan error:", err);
     } finally {
@@ -1270,7 +1273,9 @@ function TaxBot({ t, calc, expenses, dispatch, setActiveTab }) {
     const expList = expenses.length > 0
       ? expenses.slice(0, 10).map(e => `${e.vendor} (${e.category}) $${Math.round(e.annualizedAmount || e.amount || 0)}/yr`).join(", ")
       : "none tracked yet";
-    return `You are Wrytoff AI, a friendly tax assistant for self-employed business owners. Answer in plain conversational language. Keep responses short and clear. Do not use asterisks, hashtags, or any markdown formatting symbols in your replies.
+    return `IMPORTANT RULES: Reply in 2-3 plain sentences maximum. Never use asterisks (**), pound signs (#), hyphens for bullets, or any other markdown symbols. Plain text only.
+
+You are Wrytoff AI, a friendly tax assistant for self-employed business owners. Answer conversationally and briefly.
 
 Current user tax profile:
 - Business income: ${fmt(calc.netSE + calc.totalBizDed)}
@@ -1329,7 +1334,17 @@ Only include an actions block when the user explicitly asks to add or change dat
         } catch (_) {}
       }
 
-      const displayText = raw.replace(/```actions[\s\S]*?```/g, "").trim();
+      // Strip actions block, then strip any residual markdown the model added
+      const stripped = raw.replace(/```actions[\s\S]*?```/g, "").trim();
+      const displayText = stripped
+        .replace(/\*\*(.*?)\*\*/g, "$1")   // **bold** → bold
+        .replace(/\*(.*?)\*/g, "$1")        // *italic* → italic
+        .replace(/#{1,6}\s+/g, "")          // headings
+        .replace(/^\s*[-*]\s+/gm, "")       // bullet points
+        .replace(/^\d+\.\s+/gm, "")         // numbered lists
+        .replace(/`{1,3}[^`]*`{1,3}/g, "")  // inline code
+        .replace(/\n{3,}/g, "\n\n")          // collapse excess blank lines
+        .trim();
       setMessages(prev => [...prev, { role: "assistant", content: displayText || "Done." }]);
     } catch (err) {
       setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong. Please try again." }]);

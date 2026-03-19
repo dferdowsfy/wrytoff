@@ -4,7 +4,8 @@ export default async function handler(req, res) {
   }
 
   const key = process.env.OPENROUTER_API_KEY;
-  const defaultModel = process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free';
+  // Swap models via OPENROUTER_MODEL in Vercel env vars for speed/quality tradeoff
+  const model = process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free';
 
   if (!key) {
     return res.status(500).json({
@@ -17,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { system, messages = [], model } = req.body || {};
+    const { system, messages = [] } = req.body || {};
 
     const openRouterMessages = system
       ? [{ role: 'system', content: system }, ...messages]
@@ -32,9 +33,9 @@ export default async function handler(req, res) {
         'X-Title': 'Wrytoff',
       },
       body: JSON.stringify({
-        model: model || defaultModel,
+        model,
         messages: openRouterMessages,
-        max_tokens: 1024,
+        max_tokens: 300,
         temperature: 0.7,
       }),
     });
