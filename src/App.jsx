@@ -672,11 +672,19 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
 
               if (!parsed) throw new Error("Could not parse W-2 fields from AI response");
 
-              if (parsed.wages) setW2Income(parsed.wages);
-              if (parsed.federalWithholding) setW2Withheld(parsed.federalWithholding);
-              if (parsed.employerName) setEmployerName(parsed.employerName);
-              if (parsed.stateWithholding) setScenario(prev => ({ ...prev, stateWithheld: parsed.stateWithholding }));
-              if (parsed.stateName) setScenario(prev => ({ ...prev, stateName: parsed.stateName }));
+              // Defensive mapping for different model outputs
+              const w = parsed.wages ?? parsed.w2_wages ?? parsed.box1 ?? parsed.gross_wages;
+              const wh = parsed.federalWithholding ?? parsed.fed_withheld ?? parsed.box2 ?? parsed.federal_tax_withheld;
+              const emp = parsed.employerName ?? parsed.employer ?? parsed.boxC ?? parsed.company;
+              const s_wh = parsed.stateWithholding ?? parsed.state_withheld ?? parsed.box17 ?? parsed.state_tax;
+              const s_n = parsed.stateName ?? parsed.state ?? parsed.box15;
+
+              if (w) setW2Income(Number(w));
+              if (wh) setW2Withheld(Number(wh));
+              if (emp) setEmployerName(emp);
+              if (s_wh) setScenario(prev => ({ ...prev, stateWithheld: Number(s_wh) }));
+              if (s_n) setScenario(prev => ({ ...prev, stateName: s_n }));
+              
               alert("W-2 Data Successfully Synced!");
             }
             resolve();
@@ -1495,7 +1503,9 @@ function TaxBot({ t, calc, expenses, dispatch, setActiveTab }) {
       }
 
       const displayText = raw.replace(/```actions[\s\S]*?```/g, "").trim();
-      setMessages(prev => [...prev, { role: "assistant", content: displayText || "Done." }]);
+      // Use the model's text if present, otherwise provide a friendly confirmation if actions were taken
+      const fallback = actionMatch ? "I've updated your record with the information you provided! Is there anything else you'd like to adjust?" : "Done.";
+      setMessages(prev => [...prev, { role: "assistant", content: displayText || fallback }]);
     } catch (err) {
       setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong. Please try again." }]);
       console.error("TaxBot error:", err);

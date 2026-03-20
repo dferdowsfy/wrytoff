@@ -71,7 +71,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: visionModel,
         messages: [
-          { role: "system", content: "You are a professional tax document parser. Extract W-2 data with 100% accuracy. Always provide output in a strict JSON block. Identify wages, federal withholding, employer, state, and other boxes clearly." },
+          { role: "system", content: "You are a world-class tax document parser. Extract W-2 data with 100% accuracy. ALWAYS return a JSON block with these keys: wages, federalWithholding, employerName, stateName, stateWithholding. ALSO, provide a very brief 1-sentence friendly summary of what you found (outside the JSON)." },
           ...openRouterMessages
         ],
         response_format: { type: "json_object" }
