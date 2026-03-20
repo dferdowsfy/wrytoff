@@ -1,6 +1,8 @@
 import { useState, useMemo, useRef, useCallback, useEffect, Fragment } from "react";
 import { db } from './firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import * as pdfjsLib from 'pdfjs-dist';
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).href;
 
 // ─────────────────────────────────────────────
 // 2026 TAX CONSTANTS
@@ -588,13 +590,31 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
     setW2ParseStatus("reading");
 
     try {
-      // Read file as base64
-      const base64Content = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onerror = () => reject(new Error("File read failed"));
-        reader.onload = (evt) => resolve(evt.target.result.split(',')[1]);
-        reader.readAsDataURL(file);
-      });
+      let imageBase64;
+      let mediaType = 'image/jpeg';
+
+      if (file.type === 'application/pdf') {
+        // Render the first page of the PDF to a JPEG via canvas
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 2.0 }); // 2x for legibility
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        imageBase64 = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+        mediaType = 'image/jpeg';
+      } else {
+        // PNG / JPEG / WEBP — read directly as base64
+        imageBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onerror = () => reject(new Error("File read failed"));
+          reader.onload = (evt) => resolve(evt.target.result.split(',')[1]);
+          reader.readAsDataURL(file);
+        });
+        mediaType = file.type || 'image/jpeg';
+      }
 
       setW2ParseStatus("sending");
 
@@ -605,10 +625,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageBase64: base64Content,
-          mediaType: file.type || 'image/jpeg',
-        }),
+        body: JSON.stringify({ imageBase64, mediaType }),
       });
 
       const data = await res.json();
@@ -896,7 +913,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               </div>
               <div style={{ width: "24px" }} />
               <div style={{ flex: 1, textAlign: "right" }}>
-                <input type="file" ref={w2FileRef} style={{ display: "none" }} accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleW2Upload} />
+                <input type="file" ref={w2FileRef} style={{ display: "none" }} accept="image/png,image/jpeg,image/webp,.pdf,application/pdf" onChange={handleW2Upload} />
                 <button
                   onClick={() => w2FileRef.current.click()}
                   disabled={isParsingW2}
@@ -905,9 +922,9 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                     boxShadow: `0 4px 12px ${t.blue}44`, display: "flex", alignItems: "center", gap: "10px", width: "100%", justifyContent: "center"
                   }}
                 >
-                  {w2ParseStatus === "reading" ? "📖 Reading file..." : w2ParseStatus === "sending" ? "🤖 AI scanning W-2..." : w2ParseStatus === "done" ? "✅ W-2 synced!" : w2ParseStatus === "error" ? "❌ Try again" : "📷 Upload W-2 Photo / Screenshot"}
+                  {w2ParseStatus === "reading" ? "📖 Reading file..." : w2ParseStatus === "sending" ? "🤖 AI scanning W-2..." : w2ParseStatus === "done" ? "✅ W-2 synced!" : w2ParseStatus === "error" ? "❌ Try again" : "📄 Upload W-2 (PDF, PNG, or JPEG)"}
                 </button>
-                <div style={{ fontSize: "10px", color: t.textFaint, textAlign: "center", marginTop: "6px" }}>PNG, JPG, or WEBP · PDF? Take a screenshot first</div>
+                <div style={{ fontSize: "10px", color: t.textFaint, textAlign: "center", marginTop: "6px" }}>Accepts PDF, PNG, or JPEG</div>
               </div>
             </div>
 
