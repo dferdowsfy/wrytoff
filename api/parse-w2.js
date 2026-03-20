@@ -51,7 +51,11 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: visionModel,
-        messages: openRouterMessages,
+        messages: [
+          { role: "system", content: "You are a professional tax document parser. Extract W-2 data with 100% accuracy. Always provide output in a strict JSON block. Identify wages, federal withholding, employer, state, and other boxes clearly." },
+          ...openRouterMessages
+        ],
+        response_format: { type: "json_object" }
       }),
     });
 

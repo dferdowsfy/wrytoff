@@ -535,13 +535,20 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   const calc = useMemo(() => {
     const scenarioDeds = (scenario.sepIra || 0) + (scenario.healthIns || 0) + ((scenario.mileage || 0) * 0.70) + (scenario.section179 || 0);
     const totalBizDed = expenses.reduce((s, e) => s + calcDeductible(e), 0) + homeOfficeDed + scenarioDeds;
-    const netSE = Math.max(0, bizIncome - totalBizDed);
-    const seTax = netSE * 0.9235 * 0.153;
+    // Net Business Income (can be negative for AGI, but SE Tax is min 0)
+    const bizProfitLoss = bizIncome - totalBizDed;
+    const netSEForTax = Math.max(0, bizProfitLoss);
+    
+    const seTax = netSEForTax * 0.9235 * 0.153;
     const seDed = seTax * 0.5;
+    
     const totalW2 = w2Income + spouseIncome;
-    const agi = totalW2 + netSE - seDed;
+    // Business losses (bizProfitLoss < 0) reduce AGI
+    const agi = Math.max(0, totalW2 + bizProfitLoss - seDed);
+    
     const stdDed = scenario.filingStatus === "MFJ" ? STANDARD_DEDUCTION_MFJ : (scenario.filingStatus === "Single" ? STANDARD_DEDUCTION_SINGLE : 0);
-    const qbiDed = agi < QBI_THRESHOLD_MFJ ? netSE * QBI_RATE : 0;
+    const qbiDed = agi < QBI_THRESHOLD_MFJ ? Math.max(0, bizProfitLoss) * QBI_RATE : 0;
+    
     const taxable = Math.max(0, agi - stdDed - qbiDed);
     const fedTax = calcFederalTax(taxable);
     const marginal = marginalRate(taxable);
@@ -554,7 +561,25 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
       return acc;
     }, {});
 
-    return { totalIncome: totalW2 + bizIncome, totalBizDed, netSE, seTax, seDed, agi, stdDed, qbiDed, taxable, fedTax, marginal, withheld, liability, position, catTotals, isRefund: position >= 0 };
+    return { 
+      totalIncome: totalW2 + Math.max(0, bizIncome), 
+      bizProfitLoss,
+      totalBizDed, 
+      netSE: netSEForTax, 
+      seTax, 
+      seDed, 
+      agi, 
+      stdDed, 
+      qbiDed, 
+      taxable, 
+      fedTax, 
+      marginal, 
+      withheld, 
+      liability, 
+      position, 
+      catTotals, 
+      isRefund: position >= 0 
+    };
   }, [expenses, bizIncome, w2Income, spouseIncome, w2Withheld, spouseWithheld, estimatedPayments, homeOfficeDed, scenario]);
 
   const catTotals = calc.catTotals;
@@ -605,8 +630,11 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                 messages: [{
                   role: 'user',
                   content: [
-                    { type: "text", text: "Parse this W-2 document. Return ONLY a JSON object with no extra text: { \"wages\": number, \"federalWithholding\": number, \"employerName\": \"string\", \"stateName\": \"string\", \"stateWithholding\": number, \"zipCode\": \"string\" }" },
-                    { type: "image", source: { type: "base64", media_type: mediaType, data: base64Content } }
+                    { type: "text", text: "Parse this W-2 precisely. Respond only with a JSON block: { \"wages\": number, \"federalWithholding\": number, \"employerName\": \"string\", \"stateName\": \"string\", \"stateWithholding\": number, \"zipCode\": \"string\" }" },
+                    { 
+                      type: file.type === "application/pdf" ? "document" : "image", 
+                      source: { type: "base64", media_type: file.type, data: base64Content } 
+                    }
                   ]
                 }]
               })
@@ -928,7 +956,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               </div>
               <div style={{ width: "24px" }} />
               <div style={{ flex: 1, textAlign: "right" }}>
-                <input type="file" ref={w2FileRef} style={{ display: "none" }} accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleW2Upload} />
+                <input type="file" ref={w2FileRef} style={{ display: "none" }} accept="image/*,.pdf" onChange={handleW2Upload} />
                 <button
                   onClick={() => w2FileRef.current.click()}
                   disabled={isParsingW2}
@@ -937,9 +965,9 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                     boxShadow: `0 4px 12px ${t.blue}44`, display: "flex", alignItems: "center", gap: "10px", width: "100%", justifyContent: "center"
                   }}
                 >
-                  {isParsingW2 ? "⏳ Reading W-2..." : "📷 Upload W-2 Photo / Screenshot"}
+                  {isParsingW2 ? "⏳ Reading W-2..." : "📄 Upload W-2 for Instant Analysis"}
                 </button>
-                <div style={{ fontSize: "10px", color: t.textFaint, textAlign: "center", marginTop: "6px" }}>PNG, JPG, or WEBP · PDF? Take a screenshot first</div>
+                <div style={{ fontSize: "10px", color: t.textFaint, textAlign: "center", marginTop: "6px" }}>PDF, PNG, JPG, or WEBP supported</div>
               </div>
             </div>
 
@@ -1406,33 +1434,30 @@ function TaxBot({ t, calc, expenses, dispatch, setActiveTab }) {
 
   const buildSystemPrompt = () => {
     const expList = expenses.length > 0
-      ? expenses.slice(0, 10).map(e => `${e.vendor} (${e.category}) $${Math.round(e.annualizedAmount || e.amount || 0)}/yr`).join(", ")
+      ? expenses.slice(-10).map(e => `${e.vendor} (${e.category}) $${Math.round(e.annualizedAmount || e.amount || 0)}/yr`).join(", ")
       : "none tracked yet";
-    return `IMPORTANT RULES: Reply in 2-3 plain sentences maximum. Never use asterisks (**), pound signs (#), hyphens for bullets, or any other markdown symbols. Plain text only.
-
-You are Wrytoff AI, a friendly tax assistant for self-employed business owners. Answer conversationally and briefly.
-
-Current user tax profile:
-- Business income: ${fmt(calc.netSE + calc.totalBizDed)}
-- W-2 income: ${fmt(calc.totalIncome - calc.netSE - calc.totalBizDed)}
-- Net self-employment income: ${fmt(calc.netSE)}
-- Total business deductions: ${fmt(calc.totalBizDed)}
-- Adjusted gross income: ${fmt(calc.agi)}
-- Federal tax owed: ${fmt(calc.fedTax)}
-- SE tax: ${fmt(calc.seTax)}
-- Withholding: ${fmt(calc.withheld)}
-- Estimated tax position: ${calc.isRefund ? "refund of " : "owed "}${fmt(calc.position)}
-- Marginal tax rate: ${pct(calc.marginal)}
-- Tracked expenses (${expenses.length} items): ${expList}
-
-IRS context: Standard deduction MFJ is $30,000 in 2026. SE tax is 15.3% on 92.35% of net SE income. Half of SE tax is deductible above the line. SEP-IRA max is 25% of net SE or $69,000. Meals are 50% deductible. Mileage rate is $0.70/mile.
-
-You can take actions to update the user profile by including a JSON block when the user explicitly asks to add or change something. Format:
-\`\`\`actions
-[{"type":"ADD_EXPENSE","expense":{"vendor":"Name","category":"Software & Subscriptions","amount":100,"frequency":"monthly"}},{"type":"SET_BIZ_INCOME","value":120000}]
-\`\`\`
-Available action types: SET_W2_INCOME (value), SET_BIZ_INCOME (value), ADD_EXPENSE (expense object with vendor/category/amount/frequency), APPLY_OPTIMIZATION (field, value), NAVIGATE (tab: "expenses"|"income"|"optimizations"|"summary").
-Only include an actions block when the user explicitly asks to add or change data.`;
+    return `You are Wrytoff AI, a professional tax advisor strategy engine for high-performers and solo entrepreneurs.
+          
+    CURRENT USER CONTEXT:
+    - Filing Status: ${calc.scenario?.filingStatus || 'MFJ'}
+    - Household W-2 Wages: ${fmt(calc.totalIncome - calc.netSE - calc.totalBizDed)}
+    - Business Revenue: ${fmt(calc.netSE + calc.totalBizDed)}
+    - Business Deductions: ${fmt(calc.totalBizDed)}
+    - Net SE Profit: ${fmt(calc.netSE)}
+    - Estimated Tax Liability: ${fmt(calc.fedTax + calc.seTax)}
+    - Current Position: ${calc.isRefund ? 'Refund of' : 'Owe'} ${fmt(calc.position)}
+    - Tracked expenses (${expenses.length} items): ${expList}
+    
+    GUIDELINES:
+    1. Be helpful, concise, and highly tactical. Focus on maximizing REFUNDS.
+    2. Use markdown (bolding, lists) to format your response clearly.
+    3. If the user wants to update their data, ALWAYS include an actions block.
+    4. VALID ACTIONS: SET_W2_INCOME, SET_BIZ_INCOME, ADD_EXPENSE {vendor, category, amount, frequency}, APPLY_OPTIMIZATION {field, value}.
+    
+    Example Action:
+    \`\`\`actions
+    [{"type": "ADD_EXPENSE", "expense": {"vendor": "ChatGPT Plus", "category": "Software & Subscriptions", "amount": 20, "frequency": "monthly"}}]
+    \`\`\``;
   };
 
   const sendMessage = async (text) => {
