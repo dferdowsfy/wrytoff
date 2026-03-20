@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
   const key = process.env.OPENROUTER_API_KEY;
   const visionModel =
-    process.env.OPENROUTER_VISION_MODEL || 'meta-llama/llama-3.2-11b-vision-instruct:free';
+    process.env.OPENROUTER_VISION_MODEL || 'qwen/qwen3.5-flash-02-23';
 
   if (!key) {
     return res.status(500).json({ error: 'Server missing OPENROUTER_API_KEY' });
@@ -18,9 +18,11 @@ export default async function handler(req, res) {
 
   try {
     const { messages = [] } = req.body || {};
+    
+    // Log the incoming request for transparency
+    console.log(`[W-2 Parse] Calling model: ${visionModel}`);
+    console.log(`[W-2 Parse] Multimodal blocks found: ${messages[0]?.content?.length || 0}`);
 
-    // Convert Anthropic-style multimodal blocks to OpenAI image_url format.
-    // Both 'image' and 'document' blocks become image_url — vision models expect this.
     const openRouterMessages = messages.map(msg => ({
       role: msg.role,
       content: Array.isArray(msg.content)
@@ -29,10 +31,12 @@ export default async function handler(req, res) {
               (block.type === 'image' || block.type === 'document') &&
               block.source?.type === 'base64'
             ) {
+              const mime = block.source.media_type || 'image/png';
+              console.log(`[W-2 Parse] Extracting contents from ${mime}`);
               return {
                 type: 'image_url',
                 image_url: {
-                  url: `data:${block.source.media_type};base64,${block.source.data}`,
+                  url: `data:${mime};base64,${block.source.data}`,
                 },
               };
             }

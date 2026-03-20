@@ -52,6 +52,9 @@ export default async function handler(req, res) {
       .map(([cat, total]) => `  ${cat}: $${total.toLocaleString()}`)
       .join('\n') || '  (none)';
 
+    console.log(`[Optimization Scan] Calling model: ${model}`);
+    console.log(`[Optimization Scan] Profile analyzed: Biz Revenue $${bizIncome}, W-2 $${w2Income}, SE Profit $${netSE}`);
+
     const prompt = `You are a CPA-level tax optimization AI analyzing a real user's tax profile. Return ONLY a raw JSON object — no markdown, no code fences, no preamble.
 
 USER PROFILE:
