@@ -262,7 +262,7 @@ const bigInp = () => ({
 // ─────────────────────────────────────────────
 // ADD EXPENSE MODAL
 // ─────────────────────────────────────────────
-function AddExpenseModal({ onAdd, onClose, t }) {
+function AddExpenseModal({ onAdd, onClose, t, marginalRate = 0.22 }) {
   const [selectedGroup, setSelectedGroup] = useState(ALL_CATEGORY_NAMES[0]);
   const [selectedRule, setSelectedRule] = useState(null);
   const [vendor, setVendor] = useState("");
@@ -400,8 +400,8 @@ function AddExpenseModal({ onAdd, onClose, t }) {
                     <div style={{ fontSize: "18px", fontFamily: "'DM Mono',monospace", fontWeight: "600", color: t.text }}>{fmt(annualized)}</div>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: "10px", color: t.textDim, marginBottom: "4px" }}>EST. SAVINGS</div>
-                    <div style={{ fontSize: "18px", fontFamily: "'DM Mono',monospace", fontWeight: "600", color: t.green }}>{fmt(deductible * 0.22)}</div>
+                    <div style={{ fontSize: "10px", color: t.textDim, marginBottom: "4px" }}>EST. SAVINGS @ {Math.round(marginalRate * 100)}%</div>
+                    <div style={{ fontSize: "18px", fontFamily: "'DM Mono',monospace", fontWeight: "600", color: t.green }}>{fmt(deductible * marginalRate)}</div>
                   </div>
                 </div>
               )}
@@ -434,6 +434,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   const [spouseIncome, setSpouseIncome] = useState(0);
   const [w2Withheld, setW2Withheld] = useState(0);
   const [spouseWithheld, setSpouseWithheld] = useState(0);
+  const [estimatedPayments, setEstimatedPayments] = useState(0);
   const [bizIncome, setBizIncome] = useState(0);
   const [employerName, setEmployerName] = useState("");
   const [homeOfficeDed, setHomeOfficeDed] = useState(0);
@@ -457,6 +458,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
       if (td.spouseIncome != null) setSpouseIncome(td.spouseIncome);
       if (td.w2Withheld != null) setW2Withheld(td.w2Withheld);
       if (td.spouseWithheld != null) setSpouseWithheld(td.spouseWithheld);
+      if (td.estimatedPayments != null) setEstimatedPayments(td.estimatedPayments);
       if (td.bizIncome != null) setBizIncome(td.bizIncome);
       if (td.homeOfficeDed != null) setHomeOfficeDed(td.homeOfficeDed);
       if (td.scenario) setScenario(td.scenario);
@@ -472,13 +474,13 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
     const saveToCloud = async () => {
       try {
         await setDoc(doc(db, 'users', userProfile.uid), {
-          taxData: { expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario }
+          taxData: { expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, estimatedPayments, bizIncome, homeOfficeDed, scenario }
         }, { merge: true });
       } catch (e) { console.error("Cloud auto-save failure:", e); }
     };
     const syncTimer = setTimeout(saveToCloud, 1000); 
     return () => clearTimeout(syncTimer);
-  }, [expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, bizIncome, homeOfficeDed, scenario, userProfile?.uid, dataLoaded]);
+  }, [expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, estimatedPayments, bizIncome, homeOfficeDed, scenario, userProfile?.uid, dataLoaded]);
 
   const dispatch = useCallback((actions) => {
     actions.forEach(action => {
@@ -487,6 +489,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
         case "SET_SPOUSE_INCOME": setSpouseIncome(action.value); break;
         case "SET_W2_WITHHELD": setW2Withheld(action.value); break;
         case "SET_SPOUSE_WITHHELD": setSpouseWithheld(action.value); break;
+        case "SET_ESTIMATED_PAYMENTS": setEstimatedPayments(action.value); break;
         case "SET_BIZ_INCOME": setBizIncome(action.value); break;
         case "SET_HOME_OFFICE": setHomeOfficeDed(action.value); break;
         case "ADD_EXPENSE":
@@ -542,17 +545,17 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
     const taxable = Math.max(0, agi - stdDed - qbiDed);
     const fedTax = calcFederalTax(taxable);
     const marginal = marginalRate(taxable);
-    const withheld = w2Withheld + spouseWithheld;
+    const withheld = w2Withheld + spouseWithheld + estimatedPayments;
     const liability = fedTax + seTax;
     const position = withheld - liability;
-    
+
     const catTotals = expenses.reduce((acc, e) => {
       acc[e.category] = (acc[e.category] || 0) + calcDeductible(e);
       return acc;
     }, {});
 
     return { totalIncome: totalW2 + bizIncome, totalBizDed, netSE, seTax, seDed, agi, stdDed, qbiDed, taxable, fedTax, marginal, withheld, liability, position, catTotals, isRefund: position >= 0 };
-  }, [expenses, bizIncome, w2Income, spouseIncome, w2Withheld, spouseWithheld, homeOfficeDed, scenario]);
+  }, [expenses, bizIncome, w2Income, spouseIncome, w2Withheld, spouseWithheld, estimatedPayments, homeOfficeDed, scenario]);
 
   const catTotals = calc.catTotals;
   const isRefund = calc.isRefund;
@@ -691,7 +694,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif", background: t.bg, color: t.text, minHeight: "100vh" }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
-      {showAddModal && <AddExpenseModal onAdd={(e) => setExpenses(prev => [...prev, e])} onClose={() => setShowAddModal(false)} t={t} />}
+      {showAddModal && <AddExpenseModal onAdd={(e) => setExpenses(prev => [...prev, e])} onClose={() => setShowAddModal(false)} t={t} marginalRate={calc.marginal} />}
 
       <div style={{ background: t.headerBg, borderBottom: `1px solid ${t.border}`, padding: "18px 24px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
@@ -717,32 +720,120 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
 
       <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
         {activeTab === "summary" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-            <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", padding: "24px" }}>
-              <div style={{ fontSize: "12px", fontWeight: "700", color: t.textDim, marginBottom: "16px" }}>TAX WATERFALL</div>
+          <div>
+            {/* HERO METRIC CARDS */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "28px" }}>
               {[
-                { label: "Gross revenue", value: fmt(bizIncome), color: t.text },
-                { label: "Business deductions", value: "-" + fmt(calc.totalBizDed), color: t.red },
-                { label: "W-2 income", value: "+" + fmt(w2Income + spouseIncome), color: t.blue },
-                { label: "Standard deduction", value: "-" + fmt(calc.stdDed), color: t.red },
-                { label: "Taxable income", value: fmt(calc.taxable), bold: true },
-                { label: "Federal tax", value: fmt(calc.fedTax), color: t.red },
-                { label: "SE tax", value: fmt(calc.seTax), color: t.red },
-                { label: "Withholding", value: fmt(calc.withheld), color: t.green },
-              ].map((row, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${t.surface2}`, fontWeight: row.bold ? "700" : "400" }}>
-                  <span style={{ fontSize: "13px", color: row.bold ? t.text : t.textDim }}>{row.label}</span>
-                  <span style={{ fontSize: "14px", fontFamily: "'DM Mono',monospace", color: row.color || t.text }}>{row.value}</span>
+                {
+                  label: "TOTAL TAX LIABILITY",
+                  value: fmt(calc.liability),
+                  sub: `Fed ${fmt(calc.fedTax)} + SE ${fmt(calc.seTax)}`,
+                  color: t.red,
+                  accent: `${t.red}18`,
+                },
+                {
+                  label: "TAXABLE INCOME",
+                  value: fmt(calc.taxable),
+                  sub: `AGI ${fmt(calc.agi)} − deductions`,
+                  color: t.blue,
+                  accent: `${t.blue}14`,
+                },
+                {
+                  label: "TOTAL DEDUCTIONS",
+                  value: fmt(calc.totalBizDed + calc.stdDed + calc.qbiDed),
+                  sub: `Biz ${fmt(calc.totalBizDed)} + Std ${fmt(calc.stdDed)}`,
+                  color: t.green,
+                  accent: `${t.green}14`,
+                },
+                {
+                  label: "EST. REFUND / OWED",
+                  value: (calc.isRefund ? "+" : "−") + fmt(calc.position),
+                  sub: calc.isRefund ? "Estimated refund" : "Estimated amount owed",
+                  color: calc.isRefund ? t.green : t.red,
+                  accent: calc.isRefund ? `${t.green}14` : `${t.red}14`,
+                  big: true,
+                },
+              ].map((card, i) => (
+                <div key={i} style={{ background: card.accent, border: `1px solid ${card.color}33`, borderRadius: "16px", padding: "20px 24px" }}>
+                  <div style={{ fontSize: "10px", fontWeight: "700", color: card.color, letterSpacing: "1.5px", marginBottom: "10px" }}>{card.label}</div>
+                  <div style={{ fontSize: card.big ? "36px" : "32px", fontWeight: "800", color: card.color, fontFamily: "'DM Mono',monospace", lineHeight: 1.1, marginBottom: "6px" }}>{card.value}</div>
+                  <div style={{ fontSize: "11px", color: t.textDim }}>{card.sub}</div>
                 </div>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
-              {Object.entries(catTotals).map(([cat, val]) => (
-                <div key={cat} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "10px", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "12px", color: t.textMuted }}>{cat}</span>
-                  <span style={{ fontSize: "15px", fontWeight: "600", color: t.green }}>{fmt(val)}</span>
-                </div>
-              ))}
+
+            {/* SECONDARY ROW: marginal rate + income breakdown */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", marginBottom: "28px" }}>
+              <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", padding: "18px 20px" }}>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: t.textDim, letterSpacing: "1px", marginBottom: "8px" }}>MARGINAL RATE</div>
+                <div style={{ fontSize: "28px", fontWeight: "800", color: t.amber, fontFamily: "'DM Mono',monospace" }}>{Math.round(calc.marginal * 100)}%</div>
+                <div style={{ fontSize: "11px", color: t.textDim, marginTop: "4px" }}>Each extra $1 earned costs {Math.round(calc.marginal * 100)}¢</div>
+              </div>
+              <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", padding: "18px 20px" }}>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: t.textDim, letterSpacing: "1px", marginBottom: "8px" }}>TOTAL INCOME</div>
+                <div style={{ fontSize: "28px", fontWeight: "800", color: t.text, fontFamily: "'DM Mono',monospace" }}>{fmt(calc.totalIncome)}</div>
+                <div style={{ fontSize: "11px", color: t.textDim, marginTop: "4px" }}>Biz {fmt(bizIncome)} + W-2 {fmt(w2Income + spouseIncome)}</div>
+              </div>
+              <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", padding: "18px 20px" }}>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: t.textDim, letterSpacing: "1px", marginBottom: "8px" }}>QBI DEDUCTION</div>
+                <div style={{ fontSize: "28px", fontWeight: "800", color: t.green, fontFamily: "'DM Mono',monospace" }}>{fmt(calc.qbiDed)}</div>
+                <div style={{ fontSize: "11px", color: t.textDim, marginTop: "4px" }}>20% pass-through deduction</div>
+              </div>
+            </div>
+
+            {/* TAX WATERFALL + CATEGORY BREAKDOWN */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+              <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "12px", padding: "24px" }}>
+                <div style={{ fontSize: "12px", fontWeight: "700", color: t.textDim, marginBottom: "16px", letterSpacing: "0.5px" }}>TAX WATERFALL</div>
+                {[
+                  { label: "Gross revenue", value: fmt(bizIncome), color: t.text },
+                  { label: "Business deductions", value: "−" + fmt(calc.totalBizDed), color: t.red },
+                  { label: "= Net SE income", value: fmt(calc.netSE), color: t.text, bold: true },
+                  { label: "W-2 income", value: "+" + fmt(w2Income + spouseIncome), color: t.blue },
+                  { label: "SE tax deduction (½)", value: "−" + fmt(calc.seDed), color: t.red },
+                  { label: "= AGI", value: fmt(calc.agi), color: t.text, bold: true },
+                  { label: "Standard deduction", value: "−" + fmt(calc.stdDed), color: t.red },
+                  { label: "QBI deduction (20%)", value: "−" + fmt(calc.qbiDed), color: t.green },
+                  { label: "= Taxable income", value: fmt(calc.taxable), color: t.blue, bold: true },
+                  { label: "Federal income tax", value: fmt(calc.fedTax), color: t.red },
+                  { label: "Self-employment tax", value: fmt(calc.seTax), color: t.red },
+                  { label: "Total withheld/paid", value: fmt(calc.withheld), color: t.green },
+                ].map((row, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: row.bold ? "10px 8px" : "7px 8px", borderBottom: `1px solid ${t.surface2}`, background: row.bold ? t.surface2 : "transparent", borderRadius: row.bold ? "6px" : 0, marginBottom: row.bold ? "4px" : 0 }}>
+                    <span style={{ fontSize: "12px", color: row.bold ? t.text : t.textDim, fontWeight: row.bold ? "700" : "400" }}>{row.label}</span>
+                    <span style={{ fontSize: row.bold ? "15px" : "13px", fontFamily: "'DM Mono',monospace", color: row.color || t.text, fontWeight: row.bold ? "700" : "500" }}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <div style={{ fontSize: "12px", fontWeight: "700", color: t.textDim, marginBottom: "12px", letterSpacing: "0.5px" }}>DEDUCTIONS BY CATEGORY</div>
+                {Object.keys(catTotals).length === 0 ? (
+                  <div style={{ background: t.surface, border: `1px dashed ${t.border}`, borderRadius: "10px", padding: "40px", textAlign: "center", color: t.textDim, fontSize: "13px" }}>
+                    Add expenses in the Expenses tab to see your deductions breakdown.
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px" }}>
+                    {Object.entries(catTotals).sort((a, b) => b[1] - a[1]).map(([cat, val]) => {
+                      const total = calc.totalBizDed || 1;
+                      const pctVal = Math.round((val / total) * 100);
+                      const cc = t.catColors?.[cat] || { bg: t.surface2, accent: t.green, text: t.green };
+                      return (
+                        <div key={cat} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "10px", padding: "12px 16px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                            <span style={{ fontSize: "12px", color: t.textMuted, fontWeight: "500" }}>{cat}</span>
+                            <span style={{ fontSize: "16px", fontWeight: "700", color: cc.accent, fontFamily: "'DM Mono',monospace" }}>{fmt(val)}</span>
+                          </div>
+                          <div style={{ height: "4px", background: t.surface2, borderRadius: "2px", overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${pctVal}%`, background: cc.accent, borderRadius: "2px" }} />
+                          </div>
+                          <div style={{ fontSize: "10px", color: t.textFaint, marginTop: "4px" }}>{pctVal}% of total deductions</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -837,17 +928,18 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               </div>
               <div style={{ width: "24px" }} />
               <div style={{ flex: 1, textAlign: "right" }}>
-                <input type="file" ref={w2FileRef} style={{ display: "none" }} accept="image/*,.pdf" onChange={handleW2Upload} />
-                <button 
-                  onClick={() => w2FileRef.current.click()} 
+                <input type="file" ref={w2FileRef} style={{ display: "none" }} accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleW2Upload} />
+                <button
+                  onClick={() => w2FileRef.current.click()}
                   disabled={isParsingW2}
-                  style={{ 
-                    background: t.blue, color: "#fff", border: "none", borderRadius: "10px", padding: "14px 24px", fontSize: "14px", fontWeight: "700", cursor: "pointer", 
+                  style={{
+                    background: t.blue, color: "#fff", border: "none", borderRadius: "10px", padding: "14px 24px", fontSize: "14px", fontWeight: "700", cursor: "pointer",
                     boxShadow: `0 4px 12px ${t.blue}44`, display: "flex", alignItems: "center", gap: "10px", width: "100%", justifyContent: "center"
                   }}
                 >
-                  {isParsingW2 ? "Processing..." : "📄 Upload W-2 for Instant Analysis"}
+                  {isParsingW2 ? "⏳ Reading W-2..." : "📷 Upload W-2 Photo / Screenshot"}
                 </button>
+                <div style={{ fontSize: "10px", color: t.textFaint, textAlign: "center", marginTop: "6px" }}>PNG, JPG, or WEBP · PDF? Take a screenshot first</div>
               </div>
             </div>
 
@@ -907,7 +999,20 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               )}
             </div>
             
-            <div style={{ marginTop: "24px", padding: "16px", background: `${t.blue}08`, borderRadius: "12px", border: `1px solid ${t.blue}22`, fontSize: "12px", color: t.textDim, lineHeight: "1.5" }}>
+            {/* ESTIMATED TAX PAYMENTS */}
+            <div style={{ marginTop: "24px", background: t.surface, border: `1px solid ${t.border}`, borderRadius: "16px", padding: "24px" }}>
+              <div style={{ fontSize: "14px", fontWeight: "700", color: t.green, marginBottom: "6px" }}>QUARTERLY ESTIMATED PAYMENTS</div>
+              <div style={{ fontSize: "11px", color: t.textDim, marginBottom: "16px" }}>Total estimated tax payments made this year (Form 1040-ES). Self-employed filers typically pay quarterly.</div>
+              <input
+                type="number"
+                value={estimatedPayments || ""}
+                onChange={e => setEstimatedPayments(parseFloat(e.target.value) || 0)}
+                placeholder="e.g. 12000"
+                style={{ ...bigInp(), textAlign: "left", color: t.green }}
+              />
+            </div>
+
+            <div style={{ marginTop: "16px", padding: "16px", background: `${t.blue}08`, borderRadius: "12px", border: `1px solid ${t.blue}22`, fontSize: "12px", color: t.textDim, lineHeight: "1.5" }}>
               <strong>Note on Business Income:</strong> Accrual revenue should include all income earned during the tax year, regardless of when cash was received. Your business deductions are managed in the <strong>Expenses</strong> tab.
             </div>
           </div>
