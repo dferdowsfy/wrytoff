@@ -32,7 +32,22 @@ export default async function handler(req, res) {
               block.source?.type === 'base64'
             ) {
               const mime = block.source.media_type || 'image/png';
-              console.log(`[W-2 Parse] Extracting contents from ${mime}`);
+              
+              // If it's a PDF, we use the Anthropic-style 'document' block which OpenRouter better handles for PDF-capable models
+              if (mime === 'application/pdf' || block.type === 'document') {
+                console.log(`[W-2 Parse] Passing document block (${mime})`);
+                return {
+                  type: 'document',
+                  source: {
+                    type: 'base64',
+                    media_type: mime,
+                    data: block.source.data
+                  }
+                };
+              }
+              
+              // Standard images use OpenAI style image_url
+              console.log(`[W-2 Parse] Passing image_url block (${mime})`);
               return {
                 type: 'image_url',
                 image_url: {

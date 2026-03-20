@@ -1494,17 +1494,7 @@ function TaxBot({ t, calc, expenses, dispatch, setActiveTab }) {
         } catch (_) {}
       }
 
-      // Strip actions block, then strip any residual markdown the model added
-      const stripped = raw.replace(/```actions[\s\S]*?```/g, "").trim();
-      const displayText = stripped
-        .replace(/\*\*(.*?)\*\*/g, "$1")   // **bold** → bold
-        .replace(/\*(.*?)\*/g, "$1")        // *italic* → italic
-        .replace(/#{1,6}\s+/g, "")          // headings
-        .replace(/^\s*[-*]\s+/gm, "")       // bullet points
-        .replace(/^\d+\.\s+/gm, "")         // numbered lists
-        .replace(/`{1,3}[^`]*`{1,3}/g, "")  // inline code
-        .replace(/\n{3,}/g, "\n\n")          // collapse excess blank lines
-        .trim();
+      const displayText = raw.replace(/```actions[\s\S]*?```/g, "").trim();
       setMessages(prev => [...prev, { role: "assistant", content: displayText || "Done." }]);
     } catch (err) {
       setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong. Please try again." }]);
