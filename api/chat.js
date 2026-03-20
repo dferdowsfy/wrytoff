@@ -35,7 +35,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model,
         messages: openRouterMessages,
-        max_tokens: 300,
+        max_tokens: 500,
         temperature: 0.7,
       }),
     });

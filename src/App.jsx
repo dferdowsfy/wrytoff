@@ -577,94 +577,62 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
   };
 
   const [isParsingW2, setIsParsingW2] = useState(false);
+  const [w2ParseStatus, setW2ParseStatus] = useState(""); // "", "reading", "sending", "done", "error"
   const w2FileRef = useRef();
 
   const handleW2Upload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     setIsParsingW2(true);
+    setW2ParseStatus("reading");
 
     try {
-      // Wrap FileReader in a Promise so the finally block waits for the full async flow
-      await new Promise((resolve, reject) => {
+      // Read file as base64
+      const base64Content = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onerror = () => reject(new Error("File read failed"));
-        reader.onload = async (evt) => {
-          try {
-            const base64Content = evt.target.result.split(',')[1];
-            const mediaType = file.type || 'image/png';
-
-            const apiUrl = window.location.hostname === 'localhost'
-              ? 'http://localhost:3001/api/parse-w2'
-              : '/api/parse-w2';
-
-            const res = await fetch(apiUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                messages: [{
-                  role: 'user',
-                  content: [
-                    { type: "text", text: "Parse this W-2 document. Return ONLY a JSON object with no extra text: { \"wages\": number, \"federalWithholding\": number, \"employerName\": \"string\", \"stateName\": \"string\", \"stateWithholding\": number, \"zipCode\": \"string\" }" },
-                    { type: "image", source: { type: "base64", media_type: mediaType, data: base64Content } }
-                  ]
-                }]
-              })
-            });
-
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "API error");
-
-            if (data.content) {
-              // Robust JSON extraction — vision models may wrap output in code fences or add prose
-              let parsed = null;
-              const c = data.content;
-
-              // 1. Direct parse
-              try { parsed = JSON.parse(c.trim()); } catch (_) {}
-
-              // 2. Strip ```json ... ``` code fences
-              if (!parsed) {
-                const fence = c.match(/```(?:json)?\s*([\s\S]*?)```/);
-                if (fence) try { parsed = JSON.parse(fence[1].trim()); } catch (_) {}
-              }
-
-              // 3. Balanced-brace walk — finds outermost {...}
-              if (!parsed) {
-                const start = c.indexOf("{");
-                if (start !== -1) {
-                  let depth = 0, end = -1;
-                  for (let i = start; i < c.length; i++) {
-                    if (c[i] === "{") depth++;
-                    else if (c[i] === "}") { depth--; if (depth === 0) { end = i; break; } }
-                  }
-                  if (end !== -1) try { parsed = JSON.parse(c.slice(start, end + 1)); } catch (_) {}
-                }
-              }
-
-              if (!parsed) throw new Error("Could not parse W-2 fields from AI response");
-
-              if (parsed.wages) setW2Income(parsed.wages);
-              if (parsed.federalWithholding) setW2Withheld(parsed.federalWithholding);
-              if (parsed.employerName) setEmployerName(parsed.employerName);
-              if (parsed.stateWithholding) setScenario(prev => ({ ...prev, stateWithheld: parsed.stateWithholding }));
-              if (parsed.stateName) setScenario(prev => ({ ...prev, stateName: parsed.stateName }));
-              alert("W-2 Data Successfully Synced!");
-            }
-            resolve();
-          } catch (err) {
-            console.error("W-2 parse error:", err);
-            alert("Could not interpret W-2 response. Please enter values manually.");
-            resolve(); // resolve so finally still clears loading state
-          }
-        };
+        reader.onload = (evt) => resolve(evt.target.result.split(',')[1]);
         reader.readAsDataURL(file);
       });
+
+      setW2ParseStatus("sending");
+
+      const apiUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:3001/api/parse-w2'
+        : '/api/parse-w2';
+
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: base64Content,
+          mediaType: file.type || 'image/jpeg',
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || `API error ${res.status}`);
+      }
+
+      // Populate fields from structured response
+      if (data.wages) setW2Income(data.wages);
+      if (data.federalWithholding) setW2Withheld(data.federalWithholding);
+      if (data.employerName) setEmployerName(data.employerName);
+      if (data.stateWithholding) setScenario(prev => ({ ...prev, stateWithheld: data.stateWithholding }));
+      if (data.stateName) setScenario(prev => ({ ...prev, stateName: data.stateName }));
+
+      setW2ParseStatus("done");
+      alert(`W-2 Synced via ${data.model || 'AI'}!\nWages: $${(data.wages || 0).toLocaleString()} · Withheld: $${(data.federalWithholding || 0).toLocaleString()}`);
     } catch (err) {
-      console.error("Upload error:", err);
-      alert("Error reading file. Please try again.");
+      console.error("W-2 upload error:", err);
+      setW2ParseStatus("error");
+      alert(`W-2 parse failed: ${err.message}\n\nPlease enter values manually in the fields below.`);
     } finally {
       setIsParsingW2(false);
+      setTimeout(() => setW2ParseStatus(""), 3000);
       if (w2FileRef.current) w2FileRef.current.value = "";
     }
   };
@@ -937,7 +905,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                     boxShadow: `0 4px 12px ${t.blue}44`, display: "flex", alignItems: "center", gap: "10px", width: "100%", justifyContent: "center"
                   }}
                 >
-                  {isParsingW2 ? "⏳ Reading W-2..." : "📷 Upload W-2 Photo / Screenshot"}
+                  {w2ParseStatus === "reading" ? "📖 Reading file..." : w2ParseStatus === "sending" ? "🤖 AI scanning W-2..." : w2ParseStatus === "done" ? "✅ W-2 synced!" : w2ParseStatus === "error" ? "❌ Try again" : "📷 Upload W-2 Photo / Screenshot"}
                 </button>
                 <div style={{ fontSize: "10px", color: t.textFaint, textAlign: "center", marginTop: "6px" }}>PNG, JPG, or WEBP · PDF? Take a screenshot first</div>
               </div>
@@ -1480,7 +1448,10 @@ Only include an actions block when the user explicitly asks to add or change dat
         .replace(/`{1,3}[^`]*`{1,3}/g, "")  // inline code
         .replace(/\n{3,}/g, "\n\n")          // collapse excess blank lines
         .trim();
-      setMessages(prev => [...prev, { role: "assistant", content: displayText || "Done." }]);
+      // Only push if there's actual text — if the response was actions-only, say nothing
+      if (displayText) {
+        setMessages(prev => [...prev, { role: "assistant", content: displayText }]);
+      }
     } catch (err) {
       setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong. Please try again." }]);
       console.error("TaxBot error:", err);
