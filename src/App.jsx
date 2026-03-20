@@ -254,7 +254,7 @@ const inp = (s) => ({
 });
 
 const bigInp = () => ({
-  width: "100%", background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: "8px", 
+  width: "100%", background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: "8px",
   padding: "12px", fontSize: "18px", fontFamily: "'DM Mono',monospace", color: "#1d4ed8", outline: "none",
   boxSizing: "border-box"
 });
@@ -478,7 +478,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
         }, { merge: true });
       } catch (e) { console.error("Cloud auto-save failure:", e); }
     };
-    const syncTimer = setTimeout(saveToCloud, 1000); 
+    const syncTimer = setTimeout(saveToCloud, 1000);
     return () => clearTimeout(syncTimer);
   }, [expenses, assets, w2Income, spouseIncome, w2Withheld, spouseWithheld, estimatedPayments, bizIncome, homeOfficeDed, scenario, userProfile?.uid, dataLoaded]);
 
@@ -496,8 +496,8 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
           const inputAmt = parseFloat(action.expense.amount || action.expense.inputAmount || 0);
           const freq = action.expense.frequency || "annual";
           const ann = calcAnnualized(inputAmt, freq);
-          setExpenses(prev => [...prev, { 
-            id: Date.now() + Math.random(), 
+          setExpenses(prev => [...prev, {
+            id: Date.now() + Math.random(),
             vendor: action.expense.vendor,
             category: action.expense.category,
             inputAmount: inputAmt,
@@ -538,17 +538,17 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
     // Net Business Income (can be negative for AGI, but SE Tax is min 0)
     const bizProfitLoss = bizIncome - totalBizDed;
     const netSEForTax = Math.max(0, bizProfitLoss);
-    
+
     const seTax = netSEForTax * 0.9235 * 0.153;
     const seDed = seTax * 0.5;
-    
+
     const totalW2 = w2Income + spouseIncome;
     // Business losses (bizProfitLoss < 0) reduce AGI
     const agi = Math.max(0, totalW2 + bizProfitLoss - seDed);
-    
+
     const stdDed = scenario.filingStatus === "MFJ" ? STANDARD_DEDUCTION_MFJ : (scenario.filingStatus === "Single" ? STANDARD_DEDUCTION_SINGLE : 0);
     const qbiDed = agi < QBI_THRESHOLD_MFJ ? Math.max(0, bizProfitLoss) * QBI_RATE : 0;
-    
+
     const taxable = Math.max(0, agi - stdDed - qbiDed);
     const fedTax = calcFederalTax(taxable);
     const marginal = marginalRate(taxable);
@@ -561,24 +561,24 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
       return acc;
     }, {});
 
-    return { 
-      totalIncome: totalW2 + Math.max(0, bizIncome), 
+    return {
+      totalIncome: totalW2 + Math.max(0, bizIncome),
       bizProfitLoss,
-      totalBizDed, 
-      netSE: netSEForTax, 
-      seTax, 
-      seDed, 
-      agi, 
-      stdDed, 
-      qbiDed, 
-      taxable, 
-      fedTax, 
-      marginal, 
-      withheld, 
-      liability, 
-      position, 
-      catTotals, 
-      isRefund: position >= 0 
+      totalBizDed,
+      netSE: netSEForTax,
+      seTax,
+      seDed,
+      agi,
+      stdDed,
+      qbiDed,
+      taxable,
+      fedTax,
+      marginal,
+      withheld,
+      liability,
+      position,
+      catTotals,
+      isRefund: position >= 0
     };
   }, [expenses, bizIncome, w2Income, spouseIncome, w2Withheld, spouseWithheld, estimatedPayments, homeOfficeDed, scenario]);
 
@@ -619,9 +619,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
             const base64Content = evt.target.result.split(',')[1];
             const mediaType = file.type || 'image/png';
 
-            const apiUrl = window.location.hostname === 'localhost'
-              ? 'http://localhost:3001/api/parse-w2'
-              : '/api/parse-w2';
+            const apiUrl = '/api/parse-w2';
 
             const res = await fetch(apiUrl, {
               method: 'POST',
@@ -630,10 +628,10 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                 messages: [{
                   role: 'user',
                   content: [
-                    { type: "text", text: "Parse this W-2 precisely. Respond only with a JSON block: { \"wages\": number, \"federalWithholding\": number, \"employerName\": \"string\", \"stateName\": \"string\", \"stateWithholding\": number, \"zipCode\": \"string\" }" },
-                    { 
-                      type: file.type === "application/pdf" ? "document" : "image", 
-                      source: { type: "base64", media_type: file.type, data: base64Content } 
+                    { type: "text", text: "Parse this W-2 precisely. Respond ONLY with a JSON block: { \"wages\": number, \"federalWithholding\": number, \"employerName\": \"string\", \"stateName\": \"string\", \"stateWithholding\": number }" },
+                    {
+                      type: file.type === "application/pdf" ? "document" : "image",
+                      source: { type: "base64", media_type: file.type, data: base64Content }
                     }
                   ]
                 }]
@@ -641,6 +639,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
             });
 
             const data = await res.json();
+            console.log("[W-2 Parse] API Response:", data);
             if (!res.ok) throw new Error(data.error || "API error");
 
             if (data.content) {
@@ -649,12 +648,12 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               const c = data.content;
 
               // 1. Direct parse
-              try { parsed = JSON.parse(c.trim()); } catch (_) {}
+              try { parsed = JSON.parse(c.trim()); } catch (_) { }
 
               // 2. Strip ```json ... ``` code fences
               if (!parsed) {
                 const fence = c.match(/```(?:json)?\s*([\s\S]*?)```/);
-                if (fence) try { parsed = JSON.parse(fence[1].trim()); } catch (_) {}
+                if (fence) try { parsed = JSON.parse(fence[1].trim()); } catch (_) { }
               }
 
               // 3. Balanced-brace walk — finds outermost {...}
@@ -666,7 +665,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                     if (c[i] === "{") depth++;
                     else if (c[i] === "}") { depth--; if (depth === 0) { end = i; break; } }
                   }
-                  if (end !== -1) try { parsed = JSON.parse(c.slice(start, end + 1)); } catch (_) {}
+                  if (end !== -1) try { parsed = JSON.parse(c.slice(start, end + 1)); } catch (_) { }
                 }
               }
 
@@ -684,7 +683,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               if (emp) setEmployerName(emp);
               if (s_wh) setScenario(prev => ({ ...prev, stateWithheld: Number(s_wh) }));
               if (s_n) setScenario(prev => ({ ...prev, stateName: s_n }));
-              
+
               alert("W-2 Data Successfully Synced!");
             }
             resolve();
@@ -881,12 +880,12 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               <div style={{ display: "flex", gap: "10px" }}>
                 <input type="file" accept=".csv" ref={fileInputRef} style={{ display: "none" }} onChange={handleImportCSV} />
                 <button onClick={() => setShowAddModal(true)} style={{ background: t.green, color: "#fff", border: "none", borderRadius: "8px", padding: "8px 16px", fontWeight: "600", cursor: "pointer" }}>+ Add Expense</button>
-                <button 
-                  onClick={() => { 
+                <button
+                  onClick={() => {
                     if (window.confirm("Are you sure you want to clear all expenses? This will reset your current progress.")) {
-                      setExpenses([]); 
+                      setExpenses([]);
                     }
-                  }} 
+                  }}
                   style={{ background: "none", border: `1px solid ${t.red}44`, color: t.red, borderRadius: "8px", padding: "8px 12px", fontSize: "11px", cursor: "pointer", transition: "all 0.15s" }}
                 >
                   Clear All
@@ -950,7 +949,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                 <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Filing Context</div>
                 <div style={{ display: "flex", gap: "12px" }}>
                   {["Single", "MFJ"].map(fs => (
-                    <button key={fs} onClick={() => setScenario({ ...scenario, filingStatus: fs })} style={{ 
+                    <button key={fs} onClick={() => setScenario({ ...scenario, filingStatus: fs })} style={{
                       flex: 1, padding: "12px", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600",
                       background: scenario.filingStatus === fs ? t.blue : t.surface,
                       border: `1px solid ${scenario.filingStatus === fs ? t.blue : t.border}`,
@@ -983,7 +982,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               {/* PRIMARY TAXPAYER */}
               <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "16px", padding: "24px" }}>
                 <div style={{ fontSize: "14px", fontWeight: "700", color: t.blue, marginBottom: "20px" }}>PRIMARY HOLDER</div>
-                
+
                 <div style={{ marginBottom: "20px" }}>
                   <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>EMPLOYER (BOX C)</div>
                   <input type="text" value={employerName || ""} onChange={e => setEmployerName(e.target.value)} placeholder="Company Name" style={{ ...bigInp(), textAlign: "left" }} />
@@ -1021,12 +1020,12 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
               {scenario.filingStatus === "MFJ" && (
                 <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: "16px", padding: "24px" }}>
                   <div style={{ fontSize: "14px", fontWeight: "700", color: t.amber, marginBottom: "20px" }}>SPOUSE / JOINT</div>
-                  
+
                   <div style={{ marginBottom: "20px" }}>
                     <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>W-2 WAGES (GROSS)</div>
                     <input type="number" value={spouseIncome || ""} onChange={e => setSpouseIncome(parseFloat(e.target.value) || 0)} placeholder="Enter Box 1 amount" style={{ ...bigInp(), textAlign: "left" }} />
                   </div>
-                  
+
                   <div style={{ marginBottom: "20px" }}>
                     <div style={{ fontSize: "11px", fontWeight: "700", color: t.textDim, marginBottom: "8px" }}>FEDERAL WITHHOLDING</div>
                     <input type="number" value={spouseWithheld || ""} onChange={e => setSpouseWithheld(parseFloat(e.target.value) || 0)} placeholder="Enter Box 2 amount" style={{ ...bigInp(), textAlign: "left", color: t.green }} />
@@ -1034,7 +1033,7 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
                 </div>
               )}
             </div>
-            
+
             {/* ESTIMATED TAX PAYMENTS */}
             <div style={{ marginTop: "24px", background: t.surface, border: `1px solid ${t.border}`, borderRadius: "16px", padding: "24px" }}>
               <div style={{ fontSize: "14px", fontWeight: "700", color: t.green, marginBottom: "6px" }}>QUARTERLY ESTIMATED PAYMENTS</div>
@@ -1055,23 +1054,23 @@ export default function WrytoffTaxOptimizer({ userProfile, onLogout }) {
         )}
 
         {activeTab === "optimizations" && (
-           <TaxOpportunitiesEngine 
-             t={t} 
-             ctx={{ ...calc, expenses, bizIncome, homeOfficeDed, scenario, dismissedOpps }} 
-             onApply={(opp, val) => {
-               if (opp.field === "homeOfficeDed") {
-                 setHomeOfficeDed(val);
-               } else {
-                 setScenario(prev => ({ ...prev, [opp.field]: val }));
-               }
-             }}
-             onDismiss={(id) => setDismissedOpps(prev => [...prev, id])}
-             activeScenarioId={activeScenarioId}
-             setActiveScenarioId={setActiveScenarioId}
-             tempScenarioValue={tempScenarioValue}
-             setTempScenarioValue={setTempScenarioValue}
-             fmt={fmt}
-           />
+          <TaxOpportunitiesEngine
+            t={t}
+            ctx={{ ...calc, expenses, bizIncome, homeOfficeDed, scenario, dismissedOpps }}
+            onApply={(opp, val) => {
+              if (opp.field === "homeOfficeDed") {
+                setHomeOfficeDed(val);
+              } else {
+                setScenario(prev => ({ ...prev, [opp.field]: val }));
+              }
+            }}
+            onDismiss={(id) => setDismissedOpps(prev => [...prev, id])}
+            activeScenarioId={activeScenarioId}
+            setActiveScenarioId={setActiveScenarioId}
+            tempScenarioValue={tempScenarioValue}
+            setTempScenarioValue={setTempScenarioValue}
+            fmt={fmt}
+          />
         )}
       </div>
 
@@ -1174,14 +1173,14 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
       `}</style>
 
       {/* 1. TOP SUMMARY STRIP */}
-      <div style={{ 
-        background: `linear-gradient(135deg, ${t.blue}aa 0%, ${t.surface2} 100%)`, 
-        border: `1px solid ${t.border}`, 
-        borderRadius: "16px", 
-        padding: "24px", 
-        marginBottom: "24px", 
-        display: "grid", 
-        gridTemplateColumns: "1fr 1.5fr 1fr", 
+      <div style={{
+        background: `linear-gradient(135deg, ${t.blue}aa 0%, ${t.surface2} 100%)`,
+        border: `1px solid ${t.border}`,
+        borderRadius: "16px",
+        padding: "24px",
+        marginBottom: "24px",
+        display: "grid",
+        gridTemplateColumns: "1fr 1.5fr 1fr",
         gap: "24px",
         alignItems: "center",
         backdropFilter: "blur(12px)",
@@ -1227,17 +1226,17 @@ function TaxOpportunitiesEngine({ t, ctx, onApply, onDismiss, activeScenarioId, 
       {/* 2. RANKED OPPORTUNITY TABS */}
       <div style={{ marginBottom: "40px" }}>
         <h3 style={{ fontSize: "14px", fontWeight: "700", color: t.textDim, letterSpacing: "0.5px", marginBottom: "16px" }}>PRIORITY STRATEGIES</h3>
-        
+
         <div style={{ display: "flex", gap: "12px", marginBottom: "24px", overflowX: "auto", padding: "4px 4px 12px", scrollbarWidth: "none" }}>
           {topOpps.length > 0 ? topOpps.map(opp => {
             const isApplied = ctx.scenario[opp.field] > 0 || (opp.id === "home-office" && ctx.homeOfficeDed > 0);
             const needsInfo = opp.check(ctx) && !isApplied;
             return (
-              <div 
-                key={opp.id} 
+              <div
+                key={opp.id}
                 onClick={() => setSelectedOppId(opp.id)}
                 className={`opp-tab ${selectedOppId === opp.id ? "active" : ""}`}
-                style={{ 
+                style={{
                   flexShrink: 0, minWidth: "220px", background: t.surface, borderRadius: "12px", padding: "16px", textAlign: "left"
                 }}
               >
@@ -1361,9 +1360,9 @@ function OpportunityCard({ t, opp, ctx, onApply, onDismiss, isActiveScenario, se
           {opp.missingFacts.map(fact => (
             <div key={fact.id}>
               <label style={{ fontSize: "11px", color: t.textDim, display: "block", marginBottom: "6px" }}>{fact.label}</label>
-              <input 
-                type={fact.type === "currency" ? "number" : fact.type} 
-                value={tempValue} 
+              <input
+                type={fact.type === "currency" ? "number" : fact.type}
+                value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
                 placeholder={fact.placeholder}
                 autoFocus
@@ -1378,13 +1377,13 @@ function OpportunityCard({ t, opp, ctx, onApply, onDismiss, isActiveScenario, se
         <div style={{ display: "flex", gap: "10px" }}>
           {!isActiveScenario ? (
             <>
-              <button 
+              <button
                 onClick={() => setActiveScenarioId(opp.id)}
                 style={{ background: t.blue, color: "#fff", border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "13px", fontWeight: "700", cursor: "pointer", transition: "all 0.15s" }}
               >
                 Apply scenario
               </button>
-              <button 
+              <button
                 onClick={onDismiss}
                 style={{ background: "none", color: t.textDim, border: `1px solid ${t.border}`, borderRadius: "10px", padding: "10px 20px", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}
               >
@@ -1393,7 +1392,7 @@ function OpportunityCard({ t, opp, ctx, onApply, onDismiss, isActiveScenario, se
             </>
           ) : (
             <>
-              <button 
+              <button
                 onClick={() => {
                   onApply(parseFloat(tempValue) || opp.estSavings / 0.22); // naive fallback
                   setActiveScenarioId(null);
@@ -1403,7 +1402,7 @@ function OpportunityCard({ t, opp, ctx, onApply, onDismiss, isActiveScenario, se
               >
                 Confirm & Add to Profile
               </button>
-              <button 
+              <button
                 onClick={() => { setActiveScenarioId(null); setTempValue(""); }}
                 style={{ background: "none", color: t.textDim, border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}
               >
@@ -1427,6 +1426,7 @@ const CHAT_STARTERS = [
   "Can I deduct my home office?",
   "Add a software subscription expense",
   "What is my estimated refund?",
+  "Add expense",
 ];
 
 function TaxBot({ t, calc, expenses, dispatch, setActiveTab }) {
@@ -1458,7 +1458,7 @@ function TaxBot({ t, calc, expenses, dispatch, setActiveTab }) {
     
     GUIDELINES:
     1. Be helpful, concise, and highly tactical. Focus on maximizing REFUNDS.
-    2. Use markdown (bolding, lists) to format your response clearly.
+    2. Use markdown (bolding, lists) to format your response clearly. Never include * or #. 
     3. If the user wants to update their data, ALWAYS include an actions block.
     4. VALID ACTIONS: SET_W2_INCOME, SET_BIZ_INCOME, ADD_EXPENSE {vendor, category, amount, frequency}, APPLY_OPTIMIZATION {field, value}.
     
@@ -1499,7 +1499,7 @@ function TaxBot({ t, calc, expenses, dispatch, setActiveTab }) {
         try {
           const actions = JSON.parse(actionMatch[1].trim());
           if (Array.isArray(actions)) dispatch(actions);
-        } catch (_) {}
+        } catch (_) { }
       }
 
       const displayText = raw.replace(/```actions[\s\S]*?```/g, "").trim();
